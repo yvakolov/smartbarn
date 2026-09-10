@@ -1,0 +1,98 @@
+:root {
+  --sb-radius-1: 4px;
+  --sb-radius-2: 8px;
+  --sb-radius-3: 12px;
+  --sb-radius-4: 16px;
+  --sb-space-1: 4px;
+  --sb-space-2: 8px;
+  --sb-space-3: 12px;
+  --sb-space-4: 16px;
+  --sb-space-5: 20px;
+  --sb-space-6: 24px;
+  --sb-space-8: 32px;
+  --sb-shadow-1: 0 1px 2px rgb(0 0 0 / 0.08);
+  --sb-shadow-2: 0 8px 24px rgb(0 0 0 / 0.12);
+
+  --sb-gray-1: #fcfcfc;
+  --sb-gray-2: #f9f9f9;
+  --sb-gray-3: #f0f0f0;
+  --sb-gray-4: #e8e8e8;
+  --sb-gray-5: #e0e0e0;
+  --sb-gray-6: #d9d9d9;
+  --sb-gray-7: #cecece;
+  --sb-gray-8: #bbbbbb;
+  --sb-gray-9: #8d8d8d;
+  --sb-gray-10: #838383;
+  --sb-gray-11: #646464;
+  --sb-gray-12: #202020;
+
+  --sb-accent-1: #f7fcf9;
+  --sb-accent-2: #eefbf3;
+  --sb-accent-3: #d9f6e4;
+  --sb-accent-4: #c3efd5;
+  --sb-accent-5: #ace5c3;
+  --sb-accent-6: #8fd6ad;
+  --sb-accent-7: #67c292;
+  --sb-accent-8: #2fab73;
+  --sb-accent-9: #169b62;
+  --sb-accent-10: #0d8f57;
+  --sb-accent-11: #00844f;
+  --sb-accent-12: #193b2d;
+
+  --sb-bg: var(--sb-gray-1);
+  --sb-surface: var(--sb-gray-2);
+  --sb-surface-raised: #ffffff;
+  --sb-border: var(--sb-gray-6);
+  --sb-border-strong: var(--sb-gray-8);
+  --sb-text: var(--sb-gray-12);
+  --sb-text-muted: var(--sb-gray-11);
+  --sb-accent: var(--sb-accent-9);
+  --sb-accent-hover: var(--sb-accent-10);
+  --sb-accent-soft: var(--sb-accent-3);
+  --sb-focus: var(--sb-accent-8);
+}
+
+:root[data-theme='dark'] {
+  --sb-gray-1: #111111;
+  --sb-gray-2: #191919;
+  --sb-gray-3: #222222;
+  --sb-gray-4: #2a2a2a;
+  --sb-gray-5: #313131;
+  --sb-gray-6: #3a3a3a;
+  --sb-gray-7: #484848;
+  --sb-gray-8: #606060;
+  --sb-gray-9: #6e6e6e;
+  --sb-gray-10: #7b7b7b;
+  --sb-gray-11: #b4b4b4;
+  --sb-gray-12: #eeeeee;
+
+  --sb-accent-1: #0d1912;
+  --sb-accent-2: #0f1f17;
+  --sb-accent-3: #112a1e;
+  --sb-accent-4: #143725;
+  --sb-accent-5: #1b432e;
+  --sb-accent-6: #24513b;
+  --sb-accent-7: #2f6148;
+  --sb-accent-8: #3a7a59;
+  --sb-accent-9: #30a46c;
+  --sb-accent-10: #33b074;
+  --sb-accent-11: #3dd68c;
+  --sb-accent-12: #b1f1cb;
+
+  --sb-bg: var(--sb-gray-1);
+  --sb-surface: var(--sb-gray-2);
+  --sb-surface-raised: var(--sb-gray-3);
+  --sb-border: var(--sb-gray-6);
+  --sb-border-strong: var(--sb-gray-8);
+  --sb-text: var(--sb-gray-12);
+  --sb-text-muted: var(--sb-gray-11);
+  --sb-accent: var(--sb-accent-9);
+  --sb-accent-hover: var(--sb-accent-10);
+  --sb-accent-soft: var(--sb-accent-3);
+  --sb-focus: var(--sb-accent-8);
+}
+
+:where(button, input, select, textarea, a):focus-visible {
+  outline: 2px solid var(--sb-focus);
+  outline-offset: 2px;
+}
