@@ -1,0 +1,39 @@
+{
+  "app": {
+    "name": "Smart Barn",
+    "floorField": "Floor fields",
+    "settings": "Settings",
+    "logout": "Sign out"
+  },
+  "auth": {
+    "title": "Sign in to Smart Barn",
+    "subtitle": "Engineering platform for Barn House design",
+    "google": "Continue with Google"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "language": "Language",
+    "languageRu": "Русский",
+    "languageEn": "English"
+  },
+  "floorField": {
+    "title": "Floor field editor",
+    "geometry": "Geometry",
+    "layers": "Layers",
+    "view3d": "3D",
+    "length": "Length",
+    "width": "Width",
+    "elevation": "Elevation",
+    "mm": "mm",
+    "above": "Above datum plane",
+    "below": "Below datum plane",
+    "thickness": "Thickness",
+    "referencePlane": "Reference plane",
+    "preview": "Preview"
+  }
+}
