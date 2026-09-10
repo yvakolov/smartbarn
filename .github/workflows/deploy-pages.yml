@@ -26,6 +26,23 @@ jobs:
         with:
           node-version: 22
 
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-22-npm-${{ hashFiles('package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-22-npm-
+
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-node-22-nx-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-node-22-nx-${{ github.ref_name }}-
+            ${{ runner.os }}-node-22-nx-
+
       - name: Install dependencies
         run: npm install
 
