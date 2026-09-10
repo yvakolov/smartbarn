@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { SmartBarnI18nService, type SmartBarnLanguage } from '@smartbarn/platform-i18n';
-import { ThemeService, type ThemePreference } from '@smartbarn/ui-ds';
+import { LocaleService, type SmartBarnLocale } from '@smartbarn/platform-i18n';
+import { ThemeService, type SmartBarnTheme } from '@smartbarn/ui-ds';
 
 @Component({
   selector: 'smartbarn-settings-page',
@@ -32,14 +32,20 @@ import { ThemeService, type ThemePreference } from '@smartbarn/ui-ds';
   `,
 })
 export class SettingsPage {
-  private readonly i18n = inject(SmartBarnI18nService);
+  private readonly locale = inject(LocaleService);
   private readonly theme = inject(ThemeService);
-  readonly themes: ReadonlyArray<{ value: ThemePreference; label: string }> = [
+
+  readonly themes: ReadonlyArray<{ value: SmartBarnTheme; label: string }> = [
     { value: 'system', label: 'settings.themeSystem' },
     { value: 'light', label: 'settings.themeLight' },
     { value: 'dark', label: 'settings.themeDark' },
   ];
 
-  setTheme(value: ThemePreference): void { this.theme.setPreference(value); }
-  setLanguage(value: SmartBarnLanguage): void { this.i18n.setLanguage(value); }
+  setTheme(value: SmartBarnTheme): void {
+    this.theme.setTheme(value);
+  }
+
+  setLanguage(value: SmartBarnLocale): void {
+    this.locale.setLocale(value);
+  }
 }
