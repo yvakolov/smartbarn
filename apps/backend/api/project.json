@@ -1,0 +1,24 @@
+{
+  "name": "api",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/backend/api/src",
+  "targets": {
+    "build": {
+      "executor": "@nx/node:build",
+      "options": {
+        "outputPath": "dist/apps/backend/api",
+        "main": "apps/backend/api/src/main.ts",
+        "tsConfig": "apps/backend/api/tsconfig.app.json",
+        "assets": ["apps/backend/api/prisma"]
+      }
+    },
+    "serve": {
+      "executor": "@nx/node:execute",
+      "options": {
+        "buildTarget": "api:build"
+      }
+    }
+  },
+  "tags": ["scope:backend", "type:app"]
+}
