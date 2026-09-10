@@ -9,9 +9,9 @@
     "build:api": "nx build api",
     "lint": "nx lint client",
     "nx": "nx",
-    "prisma:generate": "prisma generate --schema apps/backend/api/prisma/schema.prisma",
-    "prisma:migrate": "prisma migrate dev --schema apps/backend/api/prisma/schema.prisma",
-    "prisma:studio": "prisma studio --schema apps/backend/api/prisma/schema.prisma"
+    "prisma:generate": "prisma generate --schema apps/backend/api/prisma/schema.prisma --config apps/backend/api/prisma.config.ts",
+    "prisma:migrate": "prisma migrate dev --schema apps/backend/api/prisma/schema.prisma --config apps/backend/api/prisma.config.ts",
+    "prisma:studio": "prisma studio --config apps/backend/api/prisma.config.ts"
   },
   "dependencies": {
     "@angular/animations": "~22.1.0",
@@ -24,8 +24,11 @@
     "@nestjs/common": "^12.0.1",
     "@nestjs/core": "^12.0.1",
     "@nestjs/platform-express": "^12.0.1",
+    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "dotenv": "^17.2.2",
     "konva": "^9.3.22",
+    "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "~7.8.2",
     "three": "^0.180.0",
@@ -43,6 +46,7 @@
     "@spartan-ng/cli": "^1.4.1",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^24.3.1",
+    "@types/pg": "^8.15.5",
     "@types/three": "^0.180.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.35.0",
