@@ -1,0 +1,39 @@
+{
+  "app": {
+    "name": "Smart Barn",
+    "floorField": "Перекрытия",
+    "settings": "Настройки",
+    "logout": "Выйти"
+  },
+  "auth": {
+    "title": "Вход в Smart Barn",
+    "subtitle": "Инженерная платформа для проектирования Barn House",
+    "google": "Продолжить с Google"
+  },
+  "settings": {
+    "title": "Настройки",
+    "appearance": "Оформление",
+    "theme": "Тема",
+    "themeSystem": "Системная",
+    "themeLight": "Светлая",
+    "themeDark": "Тёмная",
+    "language": "Язык",
+    "languageRu": "Русский",
+    "languageEn": "English"
+  },
+  "floorField": {
+    "title": "Редактор перекрытия",
+    "geometry": "Геометрия",
+    "layers": "Слои",
+    "view3d": "3D",
+    "length": "Длина",
+    "width": "Ширина",
+    "elevation": "Отметка",
+    "mm": "мм",
+    "above": "Выше базовой плоскости",
+    "below": "Ниже базовой плоскости",
+    "thickness": "Толщина",
+    "referencePlane": "Базовая плоскость",
+    "preview": "Предпросмотр"
+  }
+}
