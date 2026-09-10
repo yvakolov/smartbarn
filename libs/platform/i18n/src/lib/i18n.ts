@@ -1,10 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import {
-  TRANSLOCO_CONFIG,
-  TRANSLOCO_LOADER,
   TranslocoLoader,
   TranslocoService,
+  provideTransloco,
   translocoConfig,
 } from '@jsverse/transloco';
 import { Observable } from 'rxjs';
@@ -23,20 +22,16 @@ export class SmartBarnTranslocoLoader implements TranslocoLoader {
 }
 
 export const SMARTBARN_I18N_PROVIDERS = [
-  {
-    provide: TRANSLOCO_CONFIG,
-    useValue: translocoConfig({
+  provideTransloco({
+    config: translocoConfig({
       availableLangs: [...SMARTBARN_LOCALES],
       defaultLang: SMARTBARN_DEFAULT_LOCALE,
       fallbackLang: SMARTBARN_DEFAULT_LOCALE,
       reRenderOnLangChange: true,
       prodMode: true,
     }),
-  },
-  {
-    provide: TRANSLOCO_LOADER,
-    useClass: SmartBarnTranslocoLoader,
-  },
+    loader: SmartBarnTranslocoLoader,
+  }),
 ];
 
 @Injectable({ providedIn: 'root' })
