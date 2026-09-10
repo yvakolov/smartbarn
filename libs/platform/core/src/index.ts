@@ -9,3 +9,5 @@ export * from './lib/cqrs/queryBus';
 export * from './lib/cqrs/event';
 export * from './lib/cqrs/eventHandlerRegistry';
 export * from './lib/cqrs/eventBus';
+export * from './lib/commands/commandDescriptor';
+export * from './lib/commands/commandsRegistry';
