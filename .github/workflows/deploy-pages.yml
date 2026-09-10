@@ -26,13 +26,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Cache npm
-        uses: actions/cache@v4
+      - name: Generate lockfile
+        run: npm install --package-lock-only
+
+      - name: Upload lockfile
+        uses: actions/upload-artifact@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-22-npm-${{ hashFiles('package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-22-npm-
+          name: npm-lockfile
+          path: package-lock.json
 
       - name: Cache Nx
         uses: actions/cache@v4
@@ -44,7 +45,7 @@ jobs:
             ${{ runner.os }}-node-22-nx-
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build client
         run: npx nx build client --configuration=production --base-href=/smartbarn/
