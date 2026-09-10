@@ -1,0 +1,86 @@
+specification {
+  element person
+  element softwareSystem
+  element container
+  element component
+}
+
+model {
+  user = person 'Smart Barn user'
+
+  smartbarn = softwareSystem 'Smart Barn' {
+    shell = container 'Web Shell' {
+      description 'Angular host application: auth, navigation, settings and microfrontend composition'
+    }
+
+    floorMfe = container 'Floor Field Microfrontend' {
+      description 'Independent floor/ceiling field editor bounded context frontend'
+    }
+
+    wallsMfe = container 'Walls Microfrontend' {
+      description 'Target independent walls bounded context frontend'
+    }
+
+    roofMfe = container 'Roof Microfrontend' {
+      description 'Target independent roof bounded context frontend'
+    }
+
+    graphql = container 'GraphQL Gateway' {
+      description 'Target federated API entry point. Transport layer only.'
+    }
+
+    floorService = container 'Floor Service' {
+      description 'Target backend service for the floor-field bounded context'
+    }
+
+    wallsService = container 'Walls Service' {
+      description 'Target backend service for the walls bounded context'
+    }
+
+    roofService = container 'Roof Service' {
+      description 'Target backend service for the roof bounded context'
+    }
+
+    postgres = container 'PostgreSQL' {
+      description 'Persistent relational storage behind infrastructure adapters'
+    }
+
+    objectStorage = container 'Object Storage / CDN' {
+      description 'Large BIM/CAD assets such as GLB, IFC and other binary artifacts'
+    }
+
+    shell -> floorMfe 'loads/composes'
+    shell -> wallsMfe 'loads/composes (target)'
+    shell -> roofMfe 'loads/composes (target)'
+
+    floorMfe -> graphql 'GraphQL queries/commands'
+    wallsMfe -> graphql 'GraphQL queries/commands'
+    roofMfe -> graphql 'GraphQL queries/commands'
+
+    graphql -> floorService 'federated subgraph'
+    graphql -> wallsService 'federated subgraph'
+    graphql -> roofService 'federated subgraph'
+
+    floorService -> postgres 'through persistence adapter'
+    wallsService -> postgres 'through persistence adapter'
+    roofService -> postgres 'through persistence adapter'
+
+    floorService -> objectStorage 'binary geometry/assets'
+    wallsService -> objectStorage 'binary geometry/assets'
+    roofService -> objectStorage 'binary geometry/assets'
+  }
+
+  user -> smartbarn.shell 'uses'
+}
+
+views {
+  view index {
+    title 'Smart Barn / System landscape'
+    include *
+  }
+
+  view containers of smartbarn {
+    title 'Smart Barn / Containers / Target architecture'
+    include *
+  }
+}
