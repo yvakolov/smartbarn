@@ -7,7 +7,11 @@
     "start:api": "nx serve api",
     "build": "nx build client",
     "build:api": "nx build api",
-    "lint": "nx lint client",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "quality": "npm run lint && npm run format:check",
     "nx": "nx",
     "prisma:generate": "prisma generate --schema apps/backend/api/prisma/schema.prisma --config apps/backend/api/prisma.config.ts",
     "prisma:migrate": "prisma migrate dev --schema apps/backend/api/prisma/schema.prisma --config apps/backend/api/prisma.config.ts",
@@ -39,6 +43,7 @@
     "@angular-devkit/build-angular": "~22.1.0",
     "@angular/cli": "~22.1.0",
     "@angular/compiler-cli": "~22.1.0",
+    "@eslint/js": "^9.35.0",
     "@nx/angular": "^23.2.0",
     "@nx/eslint": "^23.2.0",
     "@nx/js": "^23.2.0",
@@ -50,10 +55,13 @@
     "@types/three": "^0.180.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
     "nx": "^23.2.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
     "prisma": "^7.10.0",
     "tailwindcss": "^4.1.13",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.43.0"
   }
 }
