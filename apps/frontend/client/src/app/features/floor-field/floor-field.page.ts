@@ -1,35 +1,49 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
+type FloorFieldView = 'geometry' | 'layers' | '3d';
+
+/**
+ * Interactive floor-field editor shell.
+ *
+ * Phase 1 keeps state local to the page so the geometry workflow can be
+ * validated before wiring CQRS/SignalStore infrastructure into the UI.
+ */
 @Component({
   selector: 'smartbarn-floor-field-page',
   standalone: true,
   imports: [TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <section class="flex min-h-0 flex-1 flex-col gap-4">
-      <header>
-        <p class="text-sm text-[var(--sb-color-text-muted)]">{{ 'editor.floorField' | transloco }}</p>
-        <h1 class="text-2xl font-semibold text-[var(--sb-color-text)]">{{ 'editor.title' | transloco }}</h1>
-      </header>
-
-      <div class="grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <main class="min-h-[28rem] rounded-[var(--sb-radius-4)] border border-[var(--sb-color-border)] bg-[var(--sb-color-panel)]">
-          <nav class="flex gap-1 border-b border-[var(--sb-color-border)] p-2" aria-label="Editor views">
-            <button class="rounded-[var(--sb-radius-2)] px-3 py-2 text-sm font-medium">{{ 'editor.geometry' | transloco }}</button>
-            <button class="rounded-[var(--sb-radius-2)] px-3 py-2 text-sm font-medium">{{ 'editor.layers' | transloco }}</button>
-            <button class="rounded-[var(--sb-radius-2)] px-3 py-2 text-sm font-medium">3D</button>
-          </nav>
-          <div class="grid h-[calc(100%-3.5rem)] place-items-center p-6 text-sm text-[var(--sb-color-text-muted)]">
-            Floor Field canvas
-          </div>
-        </main>
-
-        <aside class="rounded-[var(--sb-radius-4)] border border-[var(--sb-color-border)] bg-[var(--sb-color-panel)] p-4">
-          <h2 class="font-semibold">{{ 'editor.properties' | transloco }}</h2>
-        </aside>
-      </div>
-    </section>
-  `,
+  templateUrl: './floor-field.page.html',
+  styleUrl: './floor-field.page.scss',
 })
-export class FloorFieldPage {}
+export class FloorFieldPage {
+  readonly widthMeters = signal(10);
+  readonly depthMeters = signal(8);
+  readonly activeView = signal<FloorFieldView>('geometry');
+
+  readonly areaSquareMeters = computed(() => this.widthMeters() * this.depthMeters());
+  readonly fieldAspectRatio = computed(() => `${this.widthMeters()} / ${this.depthMeters()}`);
+
+  setActiveView(view: FloorFieldView): void {
+    this.activeView.set(view);
+  }
+
+  updateWidth(event: Event): void {
+    this.widthMeters.set(this.readDimension(event, this.widthMeters()));
+  }
+
+  updateDepth(event: Event): void {
+    this.depthMeters.set(this.readDimension(event, this.depthMeters()));
+  }
+
+  private readDimension(event: Event, fallback: number): number {
+    const value = Number((event.target as HTMLInputElement).value);
+
+    if (!Number.isFinite(value)) {
+      return fallback;
+    }
+
+    return Math.min(50, Math.max(1, value));
+  }
+}

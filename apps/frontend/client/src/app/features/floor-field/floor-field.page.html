@@ -1,0 +1,90 @@
+<section class="floor-field-page">
+  <header class="floor-field-page__header">
+    <p class="floor-field-page__eyebrow">{{ 'editor.floorField' | transloco }}</p>
+    <h1 class="floor-field-page__title">{{ 'editor.title' | transloco }}</h1>
+  </header>
+
+  <div class="floor-field-page__workspace">
+    <main class="floor-field-editor">
+      <nav class="floor-field-editor__tabs" aria-label="Editor views">
+        <button
+          type="button"
+          class="floor-field-editor__tab"
+          [class.floor-field-editor__tab--active]="activeView() === 'geometry'"
+          (click)="setActiveView('geometry')"
+        >
+          {{ 'editor.geometry' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="floor-field-editor__tab"
+          [class.floor-field-editor__tab--active]="activeView() === 'layers'"
+          (click)="setActiveView('layers')"
+        >
+          {{ 'editor.layers' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="floor-field-editor__tab"
+          [class.floor-field-editor__tab--active]="activeView() === '3d'"
+          (click)="setActiveView('3d')"
+        >
+          3D
+        </button>
+      </nav>
+
+      @if (activeView() === 'geometry') {
+        <section class="floor-field-canvas" aria-label="Floor field geometry">
+          <div class="floor-field-canvas__stage">
+            <div class="floor-field-shape" [style.aspect-ratio]="fieldAspectRatio()">
+              <span class="floor-field-shape__width">{{ widthMeters() }} m</span>
+              <span class="floor-field-shape__depth">{{ depthMeters() }} m</span>
+              <span class="floor-field-shape__area">{{ areaSquareMeters() }} m²</span>
+            </div>
+          </div>
+        </section>
+      } @else if (activeView() === 'layers') {
+        <section class="floor-field-placeholder">Layers editor — next implementation block</section>
+      } @else {
+        <section class="floor-field-placeholder">3D view — next implementation block</section>
+      }
+    </main>
+
+    <aside class="floor-field-properties">
+      <h2 class="floor-field-properties__title">{{ 'editor.properties' | transloco }}</h2>
+
+      <div class="floor-field-properties__form">
+        <label class="floor-field-properties__field">
+          <span class="floor-field-properties__label">Width, m</span>
+          <input
+            class="floor-field-properties__input"
+            type="number"
+            min="1"
+            max="50"
+            step="0.1"
+            [value]="widthMeters()"
+            (input)="updateWidth($event)"
+          />
+        </label>
+
+        <label class="floor-field-properties__field">
+          <span class="floor-field-properties__label">Depth, m</span>
+          <input
+            class="floor-field-properties__input"
+            type="number"
+            min="1"
+            max="50"
+            step="0.1"
+            [value]="depthMeters()"
+            (input)="updateDepth($event)"
+          />
+        </label>
+
+        <div class="floor-field-properties__summary">
+          <span>Area</span>
+          <strong>{{ areaSquareMeters() }} m²</strong>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
