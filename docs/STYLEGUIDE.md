@@ -1,6 +1,6 @@
 # Smart Barn Style Guide
 
-This document defines project-wide naming conventions. New code, architecture contracts, CQRS message tokens, configuration and documentation examples must follow these rules.
+This document defines project-wide code and naming conventions. New code, architecture contracts, CQRS message tokens, configuration and documentation examples must follow these rules.
 
 ## Naming principle
 
@@ -38,6 +38,36 @@ Correct:
 - constants that represent ordinary typed values should prefer descriptive `camelCase`; use `UPPER_SNAKE_CASE` only where an external convention or true environment-level constant requires it
 - boolean names should communicate state/capability, e.g. `isVisible`, `canExecute`, `hasSelection`
 
+## JSDoc and self-documenting code
+
+Use **JSDoc** for code contracts whose intent, invariants or usage are not fully expressed by their TypeScript signature.
+
+JSDoc is required for:
+
+- exported/public classes, interfaces, types and functions that form platform or bounded-context contracts;
+- CQRS commands, queries, events, buses, handlers and registries;
+- `CommandsRegistry` descriptors and contextual predicates;
+- domain entities/value objects where invariants or reference semantics matter;
+- renderer/adapter boundaries and infrastructure provider contracts;
+- non-obvious public methods, side effects, units, coordinate/reference-plane semantics and error conditions.
+
+JSDoc should explain **why, contract and constraints**, not mechanically repeat the identifier or TypeScript type. Prefer meaningful names and strong types over comments for obvious implementation details.
+
+Use tags such as `@param`, `@returns`, `@throws`, `@example`, `@remarks` and `@deprecated` only when they add information that is not already obvious from the signature.
+
+Example:
+
+```ts
+/**
+ * Dispatches a command to the single handler registered for its canonical token.
+ *
+ * @throws {UnknownCommandError} When the command token has no registered handler.
+ */
+execute<TCommand extends Command, TResult>(command: TCommand): Promise<TResult>;
+```
+
+Do not use comments as a substitute for decomposition. Internal code should remain readable through naming, small functions, explicit types and clear boundaries; add JSDoc where semantic context would otherwise be lost.
+
 ## CQRS message tokens
 
 Canonical message tokens use dot notation:
@@ -73,4 +103,4 @@ This naming rule applies to semantic identifiers, not automatically to every fil
 
 ## Enforcement
 
-Code review, agents and future lint/custom validation should treat this guide as the canonical naming policy. Architecture examples and generated code must use the same convention.
+Code review, agents and future lint/custom validation should treat this guide as the canonical code policy. Architecture examples and generated code must use the same convention. New public contracts should not be considered complete until their required JSDoc is present.
