@@ -1,0 +1,39 @@
+{
+  "name": "smartbarn",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "nx serve client",
+    "build": "nx build client",
+    "lint": "nx lint client",
+    "nx": "nx"
+  },
+  "dependencies": {
+    "@angular/animations": "~22.1.0",
+    "@angular/common": "~22.1.0",
+    "@angular/compiler": "~22.1.0",
+    "@angular/core": "~22.1.0",
+    "@angular/forms": "~22.1.0",
+    "@angular/platform-browser": "~22.1.0",
+    "@angular/router": "~22.1.0",
+    "rxjs": "~7.8.2",
+    "tslib": "^2.8.1",
+    "zone.js": "~0.15.1"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "~22.1.0",
+    "@angular/cli": "~22.1.0",
+    "@angular/compiler-cli": "~22.1.0",
+    "@nx/angular": "^23.2.0",
+    "@nx/eslint": "^23.2.0",
+    "@nx/js": "^23.2.0",
+    "@spartan-ng/cli": "^1.4.1",
+    "@tailwindcss/postcss": "^4.1.13",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.35.0",
+    "nx": "^23.2.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13",
+    "typescript": "~5.9.2"
+  }
+}
