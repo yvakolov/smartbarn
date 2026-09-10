@@ -2,19 +2,6 @@ import type { Routes } from '@angular/router';
 
 export const appRoutes: Routes = [
   {
-    path: 'auth',
-    loadComponent: () =>
-      import('./layouts/auth-layout/auth-layout.component').then((m) => m.AuthLayoutComponent),
-    children: [
-      {
-        path: 'login',
-        loadComponent: () =>
-          import('./features/auth/login.page').then((m) => m.LoginPage),
-      },
-      { path: '', pathMatch: 'full', redirectTo: 'login' },
-    ],
-  },
-  {
     path: 'app',
     loadComponent: () =>
       import('./layouts/shell-layout/shell-layout.component').then((m) => m.ShellLayoutComponent),
