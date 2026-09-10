@@ -17,7 +17,8 @@
       "@smartbarn/domain": ["libs/domain/src/index.ts"],
       "@smartbarn/2d-engine": ["libs/2d-engine/src/index.ts"],
       "@smartbarn/3d-engine": ["libs/3d-engine/src/index.ts"],
-      "@smartbarn/bim-converter": ["libs/bim-converter/src/index.ts"]
+      "@smartbarn/bim-converter": ["libs/bim-converter/src/index.ts"],
+      "@smartbarn/ui-kit": ["libs/ui/kit/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
