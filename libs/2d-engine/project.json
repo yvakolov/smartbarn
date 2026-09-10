@@ -1,0 +1,7 @@
+{
+  "name": "2d-engine",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/2d-engine/src",
+  "projectType": "library",
+  "tags": ["scope:graphics", "type:engine", "renderer:konva"]
+}
