@@ -22,6 +22,10 @@ The development strategy is small, complete, independently understandable increm
 - Cross-context behavior goes through explicit contracts/orchestration.
 - FSD is the UI organization standard inside independently deployable microfrontends.
 - Desktop and mobile are separate applications. Mobile is a PWA with a touch-first interaction model; shared domain/application logic lives in libraries.
+- Angular frontend code is zoneless and signal-first.
+- CQRS uses explicit CommandBus, QueryBus, EventBus, handler registries and a complete CommandsRegistry.
+- CQRS message identifiers use canonical dot notation; multi-word semantic token segments use camelCase, e.g. `floorField.layer.command.moveUp`.
+- Desktop keyboard shortcuts are a desktop-only adapter over command tokens; mobile does not inherit shortcut behavior.
 - 2D uses a renderer adapter around Konva; renderer state is not domain state.
 - 3D uses a renderer adapter around Three.js; Three runtime objects are not transport/domain models.
 - BIM/IFC is an adapter. IFC is not the Smart Barn source of truth.
@@ -61,6 +65,7 @@ Load only what the task needs:
 
 | Task | Read next |
 | --- | --- |
+| Naming / code conventions / CQRS token naming | `docs/STYLEGUIDE.md` |
 | Product/construction rules | `docs/specs/README.md` and the relevant file under `docs/specs/` |
 | Module boundaries | `docs/architecture/modules.md` |
 | Target distributed architecture | `docs/architecture/target-architecture.md` |
@@ -111,6 +116,7 @@ Non-sensitive configuration belongs in ordinary configuration/variables, not the
 ## Agent working rules
 
 - Inspect current repository state before modifying files.
+- Load `docs/STYLEGUIDE.md` before creating or changing semantic identifiers, public contracts or CQRS message tokens.
 - Prefer the smallest complete increment that closes or materially advances the highest-priority Issue.
 - Preserve deterministic domain behavior and reference-plane semantics.
 - Do not invent TBD engineering values.
