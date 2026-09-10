@@ -68,6 +68,23 @@ execute<TCommand extends Command, TResult>(command: TCommand): Promise<TResult>;
 
 Do not use comments as a substitute for decomposition. Internal code should remain readable through naming, small functions, explicit types and clear boundaries; add JSDoc where semantic context would otherwise be lost.
 
+## Angular form validation
+
+Form validation must use Angular's form validation mechanisms rather than ad-hoc validation embedded in templates or click handlers.
+
+Rules:
+
+- use Angular native/built-in validators for standard constraints such as required values, minimum/maximum values, lengths, patterns and email format;
+- use reusable custom Angular validators for Smart Barn-specific field rules and cross-field constraints;
+- use async validators only for validation that genuinely requires asynchronous I/O;
+- keep validation rules out of visual components when they represent reusable application/domain semantics;
+- expose validation state through Angular form APIs and signals rather than duplicating it in unrelated component state;
+- validation messages must be localized through the project i18n layer;
+- do not dispatch a CQRS command from an invalid form;
+- UI/form validation improves interaction but does not replace domain invariants or backend validation at trust boundaries.
+
+Custom validators should be typed, reusable and named with `camelCase`. Add JSDoc when a validator encodes non-obvious engineering/business constraints.
+
 ## CQRS message tokens
 
 Canonical message tokens use dot notation:
