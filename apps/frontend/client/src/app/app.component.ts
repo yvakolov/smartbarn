@@ -1,24 +1,25 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { LocaleService } from '@smartbarn/platform-i18n';
+import { ThemeService } from '@smartbarn/ui-ds';
 
 @Component({
   selector: 'sb-root',
   standalone: true,
-  template: `
-    <main class="app-shell">
-      <header class="app-header">
-        <div>
-          <strong>Smart Barn</strong>
-          <span>Модуль перекрытий</span>
-        </div>
-      </header>
-
-      <section class="workspace">
-        <h1>Создание перекрытия</h1>
-        <p>Базовый Nx + Angular 22 workspace готов. Следующий шаг — перенос Geometry / Layers / 3D на компоненты Spartan UI.</p>
-      </section>
-    </main>
-  `,
-  styleUrl: './app.component.scss',
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent {}
+export class AppComponent implements OnDestroy {
+  private readonly locale = inject(LocaleService);
+  private readonly theme = inject(ThemeService);
+
+  constructor() {
+    this.locale.initialize();
+    this.theme.initialize();
+  }
+
+  ngOnDestroy(): void {
+    this.theme.destroy();
+  }
+}
