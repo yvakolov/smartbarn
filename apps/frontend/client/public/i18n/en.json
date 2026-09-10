@@ -34,6 +34,13 @@
     "below": "Below datum plane",
     "thickness": "Thickness",
     "referencePlane": "Reference plane",
-    "preview": "Preview"
+    "preview": "Preview",
+    "properties": "Properties",
+    "area": "Area",
+    "perimeter": "Perimeter",
+    "swap": "Swap length and width",
+    "reset": "Reset",
+    "layersNext": "The floor assembly editor is the next working block",
+    "view3dNext": "The 3D view will be connected after the layers editor"
   }
 }
