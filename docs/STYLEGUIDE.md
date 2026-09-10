@@ -76,14 +76,53 @@ Rules:
 
 - use Angular native/built-in validators for standard constraints such as required values, minimum/maximum values, lengths, patterns and email format;
 - use reusable custom Angular validators for Smart Barn-specific field rules and cross-field constraints;
-- use async validators only for validation that genuinely requires asynchronous I/O;
+- use Angular async validators for validation that depends on server-side or database-backed state;
 - keep validation rules out of visual components when they represent reusable application/domain semantics;
 - expose validation state through Angular form APIs and signals rather than duplicating it in unrelated component state;
 - validation messages must be localized through the project i18n layer;
-- do not dispatch a CQRS command from an invalid form;
+- do not dispatch a CQRS command from an invalid or pending form;
 - UI/form validation improves interaction but does not replace domain invariants or backend validation at trust boundaries.
 
 Custom validators should be typed, reusable and named with `camelCase`. Add JSDoc when a validator encodes non-obvious engineering/business constraints.
+
+### Server-backed async validation
+
+For fields whose validity depends on current backend/database state, use a dedicated validation endpoint before submitting a complex form command/request.
+
+Required behavior:
+
+- expose dedicated backend validation endpoints for server/database-dependent field checks;
+- Angular async validators call these endpoints and map the response into Angular `ValidationErrors`;
+- prefer field-focused validation contracts instead of submitting the entire complex form solely to discover one invalid field;
+- debounce/cancel stale async validation requests where appropriate so rapid input does not create races or unnecessary backend load;
+- treat the server as authoritative: final command/request handling must validate again at the trust boundary because database state can change after pre-validation;
+- backend validation errors must use a stable structured error contract that can identify the affected field(s) and machine-readable error code(s).
+
+The validation endpoint is a preflight UX mechanism, not a replacement for validation during the final write operation.
+
+### Form error handling and field UX
+
+All reusable input components must provide a consistent invalid/error state.
+
+- use a centralized/form-aware error handler or error-mapping utility to convert Angular and backend validation errors into field-level presentation state;
+- visually highlight invalid fields using the shared design system; do not implement one-off error styling per feature;
+- render localized field error messages adjacent to or otherwise clearly associated with the affected control;
+- backend field errors returned after submit must be mapped back to the corresponding Angular control where possible;
+- non-field/global errors must be surfaced separately and must not be falsely attached to an arbitrary field;
+- avoid showing validation errors prematurely: use a consistent policy based on touched/dirty/submitted state, except where immediate validation is required by the interaction;
+- preserve accessibility semantics for invalid controls and their messages.
+
+### Form actions
+
+Primary submit/execute buttons must be disabled while the form is invalid or async validation is pending.
+
+A form action must not dispatch its CQRS command while:
+
+- `form.invalid` is true;
+- `form.pending` is true;
+- an explicit submission is already in progress when duplicate execution is unsafe.
+
+The disabled state is a UX guard only. The command handler/backend must still reject invalid input independently.
 
 ## CQRS message tokens
 
