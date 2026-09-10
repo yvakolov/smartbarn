@@ -2,6 +2,8 @@ import type { SmartBarnModuleManifest } from '@smartbarn/platform-core';
 
 export * from './lib/domain/model';
 export * from './lib/domain/floor-field';
+export * from './lib/application/commands';
+export * from './lib/application/commandDescriptors';
 
 export const FLOOR_FIELD_MODULE: SmartBarnModuleManifest = {
   id: 'floor-field',
