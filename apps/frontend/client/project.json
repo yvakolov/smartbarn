@@ -1,0 +1,36 @@
+{
+  "name": "client",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/frontend/client/src",
+  "prefix": "sb",
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:application",
+      "options": {
+        "outputPath": "dist/apps/frontend/client",
+        "index": "apps/frontend/client/src/index.html",
+        "browser": "apps/frontend/client/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/frontend/client/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [{"glob": "**/*", "input": "apps/frontend/client/public"}],
+        "styles": ["apps/frontend/client/src/styles.scss"]
+      },
+      "configurations": {
+        "production": {"outputHashing": "all"},
+        "development": {"optimization": false, "extractLicenses": false, "sourceMap": true}
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "configurations": {
+        "production": {"buildTarget": "client:build:production"},
+        "development": {"buildTarget": "client:build:development"}
+      },
+      "defaultConfiguration": "development"
+    }
+  },
+  "tags": ["scope:frontend", "type:app"]
+}
