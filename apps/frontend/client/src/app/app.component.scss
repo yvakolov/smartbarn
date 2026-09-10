@@ -1,0 +1,9 @@
+:host { display: block; min-height: 100dvh; }
+.app-shell { min-height: 100dvh; background: #0f1113; color: #eef1f3; }
+.app-header { height: 56px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid #30363b; background: #15181b; }
+.app-header div { display: flex; align-items: baseline; gap: 12px; }
+.app-header strong { font-size: 16px; }
+.app-header span { color: #929ca3; font-size: 12px; }
+.workspace { padding: 24px; }
+h1 { margin: 0 0 8px; font-size: 22px; }
+p { margin: 0; color: #aab2b8; }
