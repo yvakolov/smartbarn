@@ -14,6 +14,10 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@smartbarn/platform-core": ["libs/platform/core/src/index.ts"],
+      "@smartbarn/floor-field": ["libs/modules/floor-field/src/index.ts"],
+      "@smartbarn/walls": ["libs/modules/walls/src/index.ts"],
+      "@smartbarn/roof": ["libs/modules/roof/src/index.ts"],
       "@smartbarn/domain": ["libs/domain/src/index.ts"],
       "@smartbarn/2d-engine": ["libs/2d-engine/src/index.ts"],
       "@smartbarn/3d-engine": ["libs/3d-engine/src/index.ts"],
