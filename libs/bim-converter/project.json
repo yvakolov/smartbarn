@@ -1,0 +1,7 @@
+{
+  "name": "bim-converter",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/bim-converter/src",
+  "projectType": "library",
+  "tags": ["scope:bim", "type:converter"]
+}
