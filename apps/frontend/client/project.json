@@ -11,7 +11,7 @@
         "outputPath": "dist/apps/frontend/client",
         "index": "apps/frontend/client/src/index.html",
         "browser": "apps/frontend/client/src/main.ts",
-        "polyfills": ["zone.js"],
+        "polyfills": [],
         "tsConfig": "apps/frontend/client/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [{"glob": "**/*", "input": "apps/frontend/client/public"}],
