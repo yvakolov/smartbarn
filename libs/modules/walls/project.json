@@ -1,0 +1,7 @@
+{
+  "name": "walls",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/modules/walls/src",
+  "tags": ["scope:module", "type:feature", "feature:walls"]
+}
