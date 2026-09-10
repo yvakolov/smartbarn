@@ -1,0 +1,7 @@
+{
+  "name": "roof",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/modules/roof/src",
+  "tags": ["scope:module", "type:feature", "feature:roof"]
+}
