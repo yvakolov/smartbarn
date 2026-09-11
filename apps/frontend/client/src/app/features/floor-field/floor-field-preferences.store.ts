@@ -2,6 +2,7 @@ import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 
 export type FloorFieldViewPreference = 'geometry' | 'layers' | '3d';
 export type NavigationModePreference = 'trackpad' | 'mouse';
+export type CameraModePreference = 'orthographic' | 'perspective';
 export interface FloorFieldCameraPreference {
   readonly position: [number, number, number];
   readonly target: [number, number, number];
@@ -16,6 +17,7 @@ interface FloorFieldPreferencesState {
   readonly snapToGrid: boolean;
   readonly show3dGrid: boolean;
   readonly navigationMode: NavigationModePreference;
+  readonly cameraMode: CameraModePreference;
   readonly camera: FloorFieldCameraPreference | null;
   readonly hiddenLayerIds: readonly number[];
 }
@@ -29,6 +31,7 @@ const defaults = (userId = DEFAULT_USER_ID): FloorFieldPreferencesState => ({
   snapToGrid: true,
   show3dGrid: false,
   navigationMode: 'trackpad',
+  cameraMode: 'orthographic',
   camera: null,
   hiddenLayerIds: [],
 });
@@ -46,6 +49,7 @@ function read(userId: string): FloorFieldPreferencesState {
       ...fallback,
       ...parsed,
       userId,
+      cameraMode: parsed.cameraMode === 'perspective' ? 'perspective' : 'orthographic',
       hiddenLayerIds: Array.isArray(parsed.hiddenLayerIds) ? parsed.hiddenLayerIds.filter(Number.isFinite) : [],
       camera: parsed.camera ?? null,
     };
@@ -63,7 +67,7 @@ export const FloorFieldPreferencesStore = signalStore(
       window.localStorage.setItem(storageKey(store.userId()), JSON.stringify({
         activeView: store.activeView(), inspectorOpen: store.inspectorOpen(), gridStepMm: store.gridStepMm(),
         snapToGrid: store.snapToGrid(), show3dGrid: store.show3dGrid(), navigationMode: store.navigationMode(),
-        camera: store.camera(), hiddenLayerIds: store.hiddenLayerIds(),
+        cameraMode: store.cameraMode(), camera: store.camera(), hiddenLayerIds: store.hiddenLayerIds(),
       }));
     };
     const update = (patch: Partial<FloorFieldPreferencesState>): void => { patchState(store, patch); persist(); };
@@ -75,6 +79,7 @@ export const FloorFieldPreferencesStore = signalStore(
       setSnapToGrid(snapToGrid: boolean): void { update({ snapToGrid }); },
       setShow3dGrid(show3dGrid: boolean): void { update({ show3dGrid }); },
       setNavigationMode(navigationMode: NavigationModePreference): void { update({ navigationMode }); },
+      setCameraMode(cameraMode: CameraModePreference): void { update({ cameraMode }); },
       setCamera(camera: FloorFieldCameraPreference): void { update({ camera }); },
       setLayerVisible(id: number, visible: boolean): void {
         const hidden = new Set(store.hiddenLayerIds()); visible ? hidden.delete(id) : hidden.add(id); update({ hiddenLayerIds: [...hidden] });
