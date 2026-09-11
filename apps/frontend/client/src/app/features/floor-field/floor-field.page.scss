@@ -21,13 +21,13 @@
 
 .floor-field-page__eyebrow {
   margin: 0;
-  color: var(--sb-color-text-muted);
+  color: var(--sb-text-muted);
   font-size: 0.8125rem;
 }
 
 .floor-field-page__title {
   margin: 0.2rem 0 0;
-  color: var(--sb-color-text);
+  color: var(--sb-text);
   font-size: clamp(1.35rem, 3vw, 1.75rem);
   font-weight: 650;
 }
@@ -35,12 +35,12 @@
 .floor-field-page__stats {
   display: flex;
   gap: 0.5rem;
-  color: var(--sb-color-text-muted);
+  color: var(--sb-text-muted);
   font-size: 0.8125rem;
 }
 
 .floor-field-page__stats span {
-  border: 1px solid var(--sb-color-border);
+  border: 1px solid var(--sb-border);
   border-radius: var(--sb-radius-2);
   padding: 0.35rem 0.55rem;
 }
@@ -48,16 +48,16 @@
 .floor-field-editor {
   min-height: 0;
   overflow: hidden;
-  border: 1px solid var(--sb-color-border);
+  border: 1px solid var(--sb-border);
   border-radius: var(--sb-radius-4);
-  background: var(--sb-color-panel);
+  background: var(--sb-surface-raised);
 }
 
 .floor-field-editor__tabs {
   display: flex;
   gap: 0.25rem;
   overflow-x: auto;
-  border-bottom: 1px solid var(--sb-color-border);
+  border-bottom: 1px solid var(--sb-border);
   padding: 0.5rem;
 }
 
@@ -66,7 +66,7 @@
   border: 0;
   border-radius: var(--sb-radius-2);
   background: transparent;
-  color: var(--sb-color-text-muted);
+  color: var(--sb-text-muted);
   cursor: pointer;
   padding: 0.6rem 0.85rem;
   font: inherit;
@@ -76,14 +76,14 @@
 
 .floor-field-editor__tab:hover,
 .floor-field-editor__tab--active {
-  background: color-mix(in srgb, var(--sb-color-border) 45%, transparent);
-  color: var(--sb-color-text);
+  background: var(--sb-accent-soft);
+  color: var(--sb-text);
 }
 
 .floor-field-properties {
-  border-bottom: 1px solid var(--sb-color-border);
+  border-bottom: 1px solid var(--sb-border);
   padding: 0.75rem;
-  background: color-mix(in srgb, var(--sb-color-panel) 94%, var(--sb-color-text) 6%);
+  background: var(--sb-surface);
 }
 
 .floor-field-properties__heading {
@@ -95,6 +95,7 @@
 
 .floor-field-properties__title {
   margin: 0;
+  color: var(--sb-text);
   font-size: 0.9rem;
   font-weight: 650;
 }
@@ -105,10 +106,10 @@
 }
 
 .floor-field-properties__action {
-  border: 1px solid var(--sb-color-border);
+  border: 1px solid var(--sb-border);
   border-radius: var(--sb-radius-2);
-  background: var(--sb-color-panel);
-  color: var(--sb-color-text);
+  background: var(--sb-surface-raised);
+  color: var(--sb-text);
   cursor: pointer;
   padding: 0.4rem 0.55rem;
   font: inherit;
@@ -116,7 +117,7 @@
 }
 
 .floor-field-properties__action:hover {
-  background: color-mix(in srgb, var(--sb-color-border) 40%, transparent);
+  background: var(--sb-accent-soft);
 }
 
 .floor-field-properties__form {
@@ -132,7 +133,7 @@
 }
 
 .floor-field-properties__label {
-  color: var(--sb-color-text-muted);
+  color: var(--sb-text-muted);
   font-size: 0.75rem;
 }
 
@@ -141,14 +142,14 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   overflow: hidden;
-  border: 1px solid var(--sb-color-border);
+  border: 1px solid var(--sb-border);
   border-radius: var(--sb-radius-2);
-  background: var(--sb-color-panel);
+  background: var(--sb-surface-raised);
 }
 
 .floor-field-properties__input-wrap span {
   padding: 0 0.55rem;
-  color: var(--sb-color-text-muted);
+  color: var(--sb-text-muted);
   font-size: 0.7rem;
 }
 
@@ -158,14 +159,14 @@
   box-sizing: border-box;
   border: 0;
   background: transparent;
-  color: var(--sb-color-text);
+  color: var(--sb-text);
   padding: 0.6rem;
   font: inherit;
   font-size: 0.9rem;
 }
 
 .floor-field-properties__input:focus {
-  outline: 2px solid color-mix(in srgb, var(--sb-color-text) 22%, transparent);
+  outline: 2px solid var(--sb-focus);
   outline-offset: -2px;
 }
 
@@ -180,25 +181,25 @@
   width: 100%;
   height: clamp(18rem, 44vh, 30rem);
   border-radius: var(--sb-radius-3);
-  background: color-mix(in srgb, var(--sb-color-panel) 94%, var(--sb-color-text) 6%);
+  background: var(--sb-surface);
 }
 
 .floor-field-canvas__grid-line {
   fill: none;
-  stroke: color-mix(in srgb, var(--sb-color-border) 52%, transparent);
+  stroke: var(--sb-border);
   stroke-width: 1;
 }
 
 .floor-field-canvas__shape {
-  fill: color-mix(in srgb, var(--sb-color-panel) 77%, var(--sb-color-text) 23%);
-  stroke: var(--sb-color-text);
+  fill: var(--sb-accent-soft);
+  stroke: var(--sb-accent);
   stroke-width: 3;
   vector-effect: non-scaling-stroke;
 }
 
 .floor-field-canvas__dimension,
 .floor-field-canvas__area {
-  fill: var(--sb-color-text);
+  fill: var(--sb-text);
   font-family: inherit;
   font-weight: 650;
 }
@@ -221,11 +222,11 @@
 }
 
 .floor-field-placeholder strong {
-  color: var(--sb-color-text);
+  color: var(--sb-text);
 }
 
 .floor-field-placeholder span {
-  color: var(--sb-color-text-muted);
+  color: var(--sb-text-muted);
   font-size: 0.875rem;
 }
 
