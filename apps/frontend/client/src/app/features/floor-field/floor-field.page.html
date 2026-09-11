@@ -166,9 +166,21 @@
         </div>
       </section>
     } @else {
-      <section class="floor-field-placeholder">
-        <strong>{{ 'floorField.view3d' | transloco }}</strong>
-        <span>{{ 'floorField.view3dNext' | transloco }}</span>
+      <section class="floor-field-3d-panel">
+        <header class="floor-field-3d-panel__header">
+          <div>
+            <h2>{{ 'floorField.view3d' | transloco }}</h2>
+            <p>{{ lengthMm() }} × {{ widthMm() }} mm · {{ totalLayerThicknessMm() }} mm</p>
+          </div>
+          <span class="floor-field-3d-panel__badge">LIVE</span>
+        </header>
+
+        <smartbarn-floor-field-3d
+          [lengthMm]="lengthMm()"
+          [widthMm]="widthMm()"
+          [elevationMm]="elevationMm()"
+          [layers]="layers()"
+        />
       </section>
     }
   </main>
