@@ -14,9 +14,13 @@ export class ThreeDEngine {
   readonly root = new THREE.Group();
 
   constructor(private readonly options: ThreeDEngineOptions) {
-    this.renderer = new THREE.WebGLRenderer({ antialias: options.antialias ?? true });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: options.antialias ?? true,
+      alpha: true,
+    });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.setClearColor(0x000000, 0);
     this.options.container.appendChild(this.renderer.domElement);
 
     this.scene.add(this.root);
