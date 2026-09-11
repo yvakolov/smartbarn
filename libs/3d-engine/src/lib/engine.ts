@@ -88,6 +88,11 @@ export class ThreeDEngine {
     this.resize();
   }
 
+  setOrthographicViewHeight(height: number): void {
+    this.orthographicHeight = Math.max(height, 0.001);
+    if (this.camera.isOrthographicCamera) this.resize();
+  }
+
   resize(): void {
     const { clientWidth: width, clientHeight: height } = this.options.container;
     const aspect = Math.max(width, 1) / Math.max(height, 1);
