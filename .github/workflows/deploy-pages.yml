@@ -41,7 +41,7 @@ jobs:
         run: npm ci
 
       - name: Build client
-        run: npx nx build client --configuration=production --base-href=/smartbarn/
+        run: npx nx build client --configuration=production --base-href=/
 
       - name: Prepare Pages artifact
         run: |
