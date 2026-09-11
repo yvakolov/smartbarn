@@ -47,27 +47,47 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
 
   fitView():void{
     if(!this.engine||!this.floorObject)return;
+
+    this.engine.resize();
+    this.floorObject.updateWorldMatrix(true,true);
+
     const box=new THREE.Box3().setFromObject(this.floorObject);
     if(box.isEmpty())return;
+
     const center=box.getCenter(new THREE.Vector3());
     const size=box.getSize(new THREE.Vector3());
     const camera=this.engine.camera;
+    const controls=this.engine.controls;
+
     const vFov=THREE.MathUtils.degToRad(camera.fov);
-    const hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(camera.aspect,.001));
-    const fitHeightDistance=(size.y+size.z*.7)/(2*Math.tan(vFov/2));
-    const fitWidthDistance=(size.x+size.z*.35)/(2*Math.tan(hFov/2));
-    const distance=Math.max(4,fitHeightDistance,fitWidthDistance,Math.max(size.x,size.z)*.82)*1.28;
+    const aspect=Math.max(camera.aspect,.001);
+    const hFov=2*Math.atan(Math.tan(vFov/2)*aspect);
+    const halfWidth=size.x/2;
+    const halfHeight=Math.max(size.y,size.z*.6)/2;
+    const fitWidth=halfWidth/Math.tan(hFov/2);
+    const fitHeight=halfHeight/Math.tan(vFov/2);
+    const distance=Math.max(4,fitWidth,fitHeight,Math.max(size.x,size.z)*.72)*1.25;
     const direction=new THREE.Vector3(1,.72,1).normalize();
+
     camera.position.copy(center).addScaledVector(direction,distance);
     camera.zoom=1;
     camera.near=Math.max(.01,distance/1000);
     camera.far=Math.max(1000,distance*100);
     camera.updateProjectionMatrix();
-    this.engine.controls.target.copy(center);
+
+    controls.target.copy(center);
     camera.lookAt(center);
-    this.engine.controls.update();
+    controls.update();
+
+    // Make the explicit Center action authoritative and clear any pending
+    // OrbitControls damping delta that could otherwise move the camera again.
+    controls.saveState();
+    controls.reset();
+    controls.update();
+
     this.hasInitialView=true;
     this.saveViewState();
+    this.engine.render();
   }
 
   private applyNavigationMode():void{
