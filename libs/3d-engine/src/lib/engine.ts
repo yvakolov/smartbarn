@@ -47,7 +47,7 @@ export class ThreeDEngine {
   }
 
   get cameraMode(): CameraMode {
-    return this.camera instanceof THREE.OrthographicCamera ? 'orthographic' : 'perspective';
+    return this.isOrthographic(this.camera) ? 'orthographic' : 'perspective';
   }
 
   setCameraMode(mode: CameraMode): void {
@@ -91,25 +91,28 @@ export class ThreeDEngine {
 
   setOrthographicViewHeight(height: number): void {
     this.orthographicHeight = Math.max(height, 0.001);
-    if (this.camera instanceof THREE.OrthographicCamera) this.resize();
+    if (this.isOrthographic(this.camera)) this.resize();
   }
 
   resize(): void {
     const { clientWidth: width, clientHeight: height } = this.options.container;
     const aspect = Math.max(width, 1) / Math.max(height, 1);
 
-    if (this.camera instanceof THREE.PerspectiveCamera) {
-      this.camera.aspect = aspect;
+    if (this.isPerspective(this.camera)) {
+      const perspective = this.camera as THREE.PerspectiveCamera;
+      perspective.aspect = aspect;
+      perspective.updateProjectionMatrix();
     } else {
+      const orthographic = this.camera as THREE.OrthographicCamera;
       const halfHeight = this.orthographicHeight / 2;
       const halfWidth = halfHeight * aspect;
-      this.camera.left = -halfWidth;
-      this.camera.right = halfWidth;
-      this.camera.top = halfHeight;
-      this.camera.bottom = -halfHeight;
+      orthographic.left = -halfWidth;
+      orthographic.right = halfWidth;
+      orthographic.top = halfHeight;
+      orthographic.bottom = -halfHeight;
+      orthographic.updateProjectionMatrix();
     }
 
-    this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
   }
 
@@ -122,6 +125,14 @@ export class ThreeDEngine {
     this.controls.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
+  }
+
+  private isPerspective(camera: THREE.Camera): boolean {
+    return (camera as THREE.PerspectiveCamera).isPerspectiveCamera === true;
+  }
+
+  private isOrthographic(camera: THREE.Camera): boolean {
+    return (camera as THREE.OrthographicCamera).isOrthographicCamera === true;
   }
 
   private aspect(): number {
