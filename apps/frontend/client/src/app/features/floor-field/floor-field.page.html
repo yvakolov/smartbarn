@@ -4,183 +4,78 @@
       <p class="floor-field-page__eyebrow">{{ 'app.floorField' | transloco }}</p>
       <h1 class="floor-field-page__title">{{ 'floorField.title' | transloco }}</h1>
     </div>
-
-    <div class="floor-field-page__stats" aria-label="Geometry summary">
-      <span>{{ areaSquareMeters() }} m²</span>
-      <span>{{ perimeterMeters() }} m</span>
-    </div>
+    <div class="floor-field-page__stats"><span>{{ areaSquareMeters() }} m²</span><span>{{ perimeterMeters() }} m</span></div>
   </header>
 
   <main class="floor-field-editor">
     <nav class="floor-field-editor__tabs" aria-label="Editor views">
-      <button
-        type="button"
-        class="floor-field-editor__tab"
-        [class.floor-field-editor__tab--active]="activeView() === 'geometry'"
-        (click)="setActiveView('geometry')"
-      >
-        {{ 'floorField.geometry' | transloco }}
-      </button>
-      <button
-        type="button"
-        class="floor-field-editor__tab"
-        [class.floor-field-editor__tab--active]="activeView() === 'layers'"
-        (click)="setActiveView('layers')"
-      >
-        {{ 'floorField.layers' | transloco }}
-      </button>
-      <button
-        type="button"
-        class="floor-field-editor__tab"
-        [class.floor-field-editor__tab--active]="activeView() === '3d'"
-        (click)="setActiveView('3d')"
-      >
-        {{ 'floorField.view3d' | transloco }}
-      </button>
+      <button type="button" class="floor-field-editor__tab" [class.floor-field-editor__tab--active]="activeView() === 'geometry'" (click)="setActiveView('geometry')">{{ 'floorField.geometry' | transloco }}</button>
+      <button type="button" class="floor-field-editor__tab" [class.floor-field-editor__tab--active]="activeView() === 'layers'" (click)="setActiveView('layers')">{{ 'floorField.layers' | transloco }}</button>
+      <button type="button" class="floor-field-editor__tab" [class.floor-field-editor__tab--active]="activeView() === '3d'" (click)="setActiveView('3d')">{{ 'floorField.view3d' | transloco }}</button>
     </nav>
 
     @if (activeView() === 'geometry') {
-      <section class="floor-field-properties" aria-label="Geometry properties">
+      <section class="floor-field-properties">
         <div class="floor-field-properties__heading">
           <h2 class="floor-field-properties__title">{{ 'floorField.properties' | transloco }}</h2>
           <div class="floor-field-properties__actions">
-            <button type="button" class="floor-field-properties__action" (click)="swapDimensions()">
-              {{ 'floorField.swap' | transloco }}
-            </button>
-            <button type="button" class="floor-field-properties__action" (click)="resetGeometry()">
-              {{ 'floorField.reset' | transloco }}
-            </button>
+            <button type="button" class="floor-field-properties__action" [class.floor-field-properties__action--active]="snapToGrid()" (click)="toggleSnapToGrid()">Сетка 100×100 мм</button>
+            <button type="button" class="floor-field-properties__action" (click)="swapDimensions()">{{ 'floorField.swap' | transloco }}</button>
+            <button type="button" class="floor-field-properties__action" (click)="resetGeometry()">{{ 'floorField.reset' | transloco }}</button>
           </div>
         </div>
-
         <div class="floor-field-properties__form">
-          <label class="floor-field-properties__field">
-            <span class="floor-field-properties__label">{{ 'floorField.length' | transloco }}</span>
-            <div class="floor-field-properties__input-wrap">
-              <input class="floor-field-properties__input" type="number" min="500" max="50000" step="100" inputmode="numeric" [value]="lengthMm()" (input)="updateLength($event)" />
-              <span>mm</span>
-            </div>
-          </label>
-
-          <label class="floor-field-properties__field">
-            <span class="floor-field-properties__label">{{ 'floorField.width' | transloco }}</span>
-            <div class="floor-field-properties__input-wrap">
-              <input class="floor-field-properties__input" type="number" min="500" max="50000" step="100" inputmode="numeric" [value]="widthMm()" (input)="updateWidth($event)" />
-              <span>mm</span>
-            </div>
-          </label>
-
-          <label class="floor-field-properties__field">
-            <span class="floor-field-properties__label">{{ 'floorField.elevation' | transloco }}</span>
-            <div class="floor-field-properties__input-wrap">
-              <input class="floor-field-properties__input" type="number" min="-10000" max="50000" step="10" inputmode="numeric" [value]="elevationMm()" (input)="updateElevation($event)" />
-              <span>mm</span>
-            </div>
-          </label>
-
-          <label class="floor-field-properties__field">
-            <span class="floor-field-properties__label">{{ 'floorField.thickness' | transloco }}</span>
-            <div class="floor-field-properties__input-wrap">
-              <input class="floor-field-properties__input" type="number" min="20" max="2000" step="10" inputmode="numeric" [value]="thicknessMm()" (input)="updateThickness($event)" />
-              <span>mm</span>
-            </div>
-          </label>
+          <label class="floor-field-properties__field"><span class="floor-field-properties__label">{{ 'floorField.length' | transloco }}</span><div class="floor-field-properties__input-wrap"><input class="floor-field-properties__input" type="number" min="500" max="50000" step="100" [value]="lengthMm()" (input)="updateLength($event)" /><span>mm</span></div></label>
+          <label class="floor-field-properties__field"><span class="floor-field-properties__label">{{ 'floorField.width' | transloco }}</span><div class="floor-field-properties__input-wrap"><input class="floor-field-properties__input" type="number" min="500" max="50000" step="100" [value]="widthMm()" (input)="updateWidth($event)" /><span>mm</span></div></label>
+          <label class="floor-field-properties__field"><span class="floor-field-properties__label">{{ 'floorField.elevation' | transloco }}</span><div class="floor-field-properties__input-wrap"><input class="floor-field-properties__input" type="number" min="-10000" max="50000" step="10" [value]="elevationMm()" (input)="updateElevation($event)" /><span>mm</span></div></label>
         </div>
       </section>
 
-      <section class="floor-field-canvas" aria-label="Floor field geometry">
+      <section class="floor-field-canvas" (pointermove)="resizeGeometry($event)" (pointerup)="stopResize()" (pointercancel)="stopResize()" (pointerleave)="stopResize()">
         <svg class="floor-field-canvas__drawing" viewBox="0 0 1000 650" role="img" aria-label="Scaled floor field preview">
-          <defs>
-            <pattern id="floor-grid" width="25" height="25" patternUnits="userSpaceOnUse">
-              <path d="M 25 0 L 0 0 0 25" class="floor-field-canvas__grid-line" />
-            </pattern>
-          </defs>
-
+          <defs><pattern id="floor-grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" class="floor-field-canvas__grid-line" /></pattern></defs>
           <rect class="floor-field-canvas__grid" x="0" y="0" width="1000" height="650" fill="url(#floor-grid)" />
           <rect class="floor-field-canvas__shape" [attr.x]="previewRect().x" [attr.y]="previewRect().y" [attr.width]="previewRect().width" [attr.height]="previewRect().height" />
 
-          <text class="floor-field-canvas__dimension" [attr.x]="previewRect().x + previewRect().width / 2" [attr.y]="previewRect().y - 22" text-anchor="middle">
-            {{ lengthMm() }} mm
-          </text>
-          <text class="floor-field-canvas__dimension" [attr.x]="previewRect().x + previewRect().width + 28" [attr.y]="previewRect().y + previewRect().height / 2" text-anchor="middle" [attr.transform]="'rotate(90 ' + (previewRect().x + previewRect().width + 28) + ' ' + (previewRect().y + previewRect().height / 2) + ')'">
-            {{ widthMm() }} mm
-          </text>
-          <text class="floor-field-canvas__area" [attr.x]="previewRect().x + previewRect().width / 2" [attr.y]="previewRect().y + previewRect().height / 2" text-anchor="middle" dominant-baseline="middle">
-            {{ areaSquareMeters() }} m²
-          </text>
+          <line class="floor-field-canvas__dim-line" [attr.x1]="previewRect().x" [attr.y1]="previewRect().y - 34" [attr.x2]="previewRect().x + previewRect().width" [attr.y2]="previewRect().y - 34" />
+          <line class="floor-field-canvas__dim-line" [attr.x1]="previewRect().x" [attr.y1]="previewRect().y - 44" [attr.x2]="previewRect().x" [attr.y2]="previewRect().y - 24" />
+          <line class="floor-field-canvas__dim-line" [attr.x1]="previewRect().x + previewRect().width" [attr.y1]="previewRect().y - 44" [attr.x2]="previewRect().x + previewRect().width" [attr.y2]="previewRect().y - 24" />
+          <text class="floor-field-canvas__dimension" [attr.x]="previewRect().x + previewRect().width / 2" [attr.y]="previewRect().y - 44" text-anchor="middle">{{ lengthMm() }} mm</text>
+
+          <line class="floor-field-canvas__dim-line" [attr.x1]="previewRect().x - 34" [attr.y1]="previewRect().y" [attr.x2]="previewRect().x - 34" [attr.y2]="previewRect().y + previewRect().height" />
+          <line class="floor-field-canvas__dim-line" [attr.x1]="previewRect().x - 44" [attr.y1]="previewRect().y" [attr.x2]="previewRect().x - 24" [attr.y2]="previewRect().y" />
+          <line class="floor-field-canvas__dim-line" [attr.x1]="previewRect().x - 44" [attr.y1]="previewRect().y + previewRect().height" [attr.x2]="previewRect().x - 24" [attr.y2]="previewRect().y + previewRect().height" />
+          <text class="floor-field-canvas__dimension" [attr.x]="previewRect().x - 46" [attr.y]="previewRect().y + previewRect().height / 2" text-anchor="middle" [attr.transform]="'rotate(-90 ' + (previewRect().x - 46) + ' ' + (previewRect().y + previewRect().height / 2) + ')'">{{ widthMm() }} mm</text>
+          <text class="floor-field-canvas__area" [attr.x]="previewRect().x + previewRect().width / 2" [attr.y]="previewRect().y + previewRect().height / 2" text-anchor="middle" dominant-baseline="middle">{{ areaSquareMeters() }} m²</text>
+
+          <rect class="floor-field-canvas__resize-handle floor-field-canvas__resize-handle--x" [attr.x]="previewRect().x + previewRect().width - 6" [attr.y]="previewRect().y + previewRect().height / 2 - 24" width="12" height="48" rx="4" (pointerdown)="startResize('length', $event)" />
+          <rect class="floor-field-canvas__resize-handle floor-field-canvas__resize-handle--y" [attr.x]="previewRect().x + previewRect().width / 2 - 24" [attr.y]="previewRect().y + previewRect().height - 6" width="48" height="12" rx="4" (pointerdown)="startResize('width', $event)" />
+          <rect class="floor-field-canvas__resize-handle floor-field-canvas__resize-handle--both" [attr.x]="previewRect().x + previewRect().width - 8" [attr.y]="previewRect().y + previewRect().height - 8" width="16" height="16" rx="3" (pointerdown)="startResize('both', $event)" />
         </svg>
       </section>
     } @else if (activeView() === 'layers') {
-      <section class="floor-layers" aria-label="Floor assembly layers">
+      <section class="floor-layers">
         <header class="floor-layers__header">
-          <div>
-            <h2 class="floor-layers__title">{{ 'floorField.layerAssembly' | transloco }}</h2>
-            <p class="floor-layers__hint">{{ 'floorField.layerHint' | transloco }}</p>
-          </div>
-          <button type="button" class="floor-layers__add" (click)="addLayer()">
-            + {{ 'floorField.addLayer' | transloco }}
-          </button>
+          <div><h2 class="floor-layers__title">{{ 'floorField.layerAssembly' | transloco }}</h2><p class="floor-layers__hint">SIP 224 мм по умолчанию. Слои можно добавлять сверху и снизу.</p></div>
+          <div class="floor-layers__add-group"><button type="button" class="floor-layers__add" (click)="addLayer('top')">+ Слой сверху</button><button type="button" class="floor-layers__add" (click)="addLayer('bottom')">+ Слой снизу</button></div>
         </header>
-
-        <div class="floor-layers__summary">
-          <span>{{ 'floorField.totalThickness' | transloco }}</span>
-          <strong>{{ totalLayerThicknessMm() }} mm</strong>
-        </div>
-
+        <div class="floor-layers__summary"><span>{{ 'floorField.totalThickness' | transloco }}</span><strong>{{ totalLayerThicknessMm() }} mm</strong></div>
         <div class="floor-layers__list">
           @for (layer of layers(); track layer.id; let index = $index) {
-            <article
-              class="floor-layer"
-              draggable="true"
-              (dragstart)="startLayerDrag(layer.id, $event)"
-              (dragover)="allowLayerDrop($event)"
-              (drop)="dropLayer(layer.id, $event)"
-              (dragend)="endLayerDrag()"
-            >
-              <div class="floor-layer__handle" aria-hidden="true">⋮⋮</div>
-              <div class="floor-layer__identity">
-                <span class="floor-layer__index">{{ index + 1 }}</span>
-                <div>
-                  <strong class="floor-layer__name">{{ layer.name | transloco }}</strong>
-                  <span class="floor-layer__kind">{{ ('floorField.layerKind.' + layer.kind) | transloco }}</span>
-                </div>
-              </div>
-
-              <label class="floor-layer__thickness">
-                <span>{{ 'floorField.thickness' | transloco }}</span>
-                <div class="floor-layer__input-wrap">
-                  <input type="number" min="1" max="2000" step="1" inputmode="numeric" [value]="layer.thicknessMm" (input)="updateLayerThickness(layer.id, $event)" />
-                  <span>mm</span>
-                </div>
-              </label>
-
-              <div class="floor-layer__actions">
-                <button type="button" [disabled]="index === 0" [attr.aria-label]="'floorField.moveUp' | transloco" (click)="moveLayer(layer.id, -1)">↑</button>
-                <button type="button" [disabled]="index === layers().length - 1" [attr.aria-label]="'floorField.moveDown' | transloco" (click)="moveLayer(layer.id, 1)">↓</button>
-                <button type="button" class="floor-layer__remove" [attr.aria-label]="'floorField.removeLayer' | transloco" (click)="removeLayer(layer.id)">×</button>
-              </div>
+            <article class="floor-layer" [class.floor-layer--drop-before]="dragOverLayerId() === layer.id && dragOverPosition() === 'before'" [class.floor-layer--drop-after]="dragOverLayerId() === layer.id && dragOverPosition() === 'after'" draggable="true" (dragstart)="startLayerDrag(layer.id, $event)" (dragover)="allowLayerDrop(layer.id, $event)" (drop)="dropLayer(layer.id, $event)" (dragend)="endLayerDrag()">
+              <div class="floor-layer__handle">⋮⋮</div>
+              <div class="floor-layer__identity"><span class="floor-layer__index" [style.background]="layer.color">{{ index + 1 }}</span><input class="floor-layer__name-input" [value]="layer.name" (change)="updateLayerName(layer.id, $event)" /></div>
+              <label class="floor-layer__color"><span>Цвет</span><input type="color" [value]="layer.color" (input)="updateLayerColor(layer.id, $event)" /></label>
+              <label class="floor-layer__thickness"><span>{{ 'floorField.thickness' | transloco }}</span><div class="floor-layer__input-wrap"><input type="number" min="1" max="2000" step="1" [value]="layer.thicknessMm" (input)="updateLayerThickness(layer.id, $event)" /><span>mm</span></div></label>
+              <div class="floor-layer__actions"><button type="button" [disabled]="index === 0" (click)="moveLayer(layer.id, -1)">↑</button><button type="button" [disabled]="index === layers().length - 1" (click)="moveLayer(layer.id, 1)">↓</button><button type="button" class="floor-layer__remove" (click)="removeLayer(layer.id)">×</button></div>
             </article>
-          } @empty {
-            <div class="floor-layers__empty">{{ 'floorField.noLayers' | transloco }}</div>
           }
         </div>
       </section>
     } @else {
       <section class="floor-field-3d-panel">
-        <header class="floor-field-3d-panel__header">
-          <div>
-            <h2>{{ 'floorField.view3d' | transloco }}</h2>
-            <p>{{ lengthMm() }} × {{ widthMm() }} mm · {{ totalLayerThicknessMm() }} mm</p>
-          </div>
-          <span class="floor-field-3d-panel__badge">LIVE</span>
-        </header>
-
-        <smartbarn-floor-field-3d
-          [lengthMm]="lengthMm()"
-          [widthMm]="widthMm()"
-          [elevationMm]="elevationMm()"
-          [layers]="layers()"
-        />
+        <header class="floor-field-3d-panel__header"><div><h2>{{ 'floorField.view3d' | transloco }}</h2><p>{{ lengthMm() }} × {{ widthMm() }} mm · {{ totalLayerThicknessMm() }} mm</p></div><span class="floor-field-3d-panel__badge">LIVE</span></header>
+        <smartbarn-floor-field-3d [lengthMm]="lengthMm()" [widthMm]="widthMm()" [elevationMm]="elevationMm()" [layers]="layers()" />
       </section>
     }
   </main>
