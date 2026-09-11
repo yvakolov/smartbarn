@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export type CameraMode = 'orthographic' | 'perspective';
+type EngineCamera = THREE.PerspectiveCamera & THREE.OrthographicCamera;
 
 export interface ThreeDEngineOptions {
   container: HTMLElement;
@@ -11,7 +12,7 @@ export interface ThreeDEngineOptions {
 
 export class ThreeDEngine {
   readonly scene = new THREE.Scene();
-  camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
+  camera: EngineCamera;
   readonly renderer: THREE.WebGLRenderer;
   readonly controls: OrbitControls;
   readonly root = new THREE.Group();
@@ -34,7 +35,7 @@ export class ThreeDEngine {
     keyLight.position.set(8, 12, 10);
     this.scene.add(keyLight);
 
-    this.camera = this.createPerspectiveCamera();
+    this.camera = this.createPerspectiveCamera() as EngineCamera;
     this.camera.position.set(12, 10, 12);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
@@ -69,7 +70,7 @@ export class ThreeDEngine {
       next.up.copy(up);
       next.lookAt(target);
       next.updateProjectionMatrix();
-      this.camera = next;
+      this.camera = next as EngineCamera;
     } else {
       const orthographic = this.camera as THREE.OrthographicCamera;
       const visibleHeight = this.orthographicHeight / Math.max(orthographic.zoom, 0.001);
@@ -79,7 +80,7 @@ export class ThreeDEngine {
       next.up.copy(up);
       next.lookAt(target);
       next.updateProjectionMatrix();
-      this.camera = next;
+      this.camera = next as EngineCamera;
     }
 
     this.controls.object = this.camera;
