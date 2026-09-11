@@ -46,7 +46,7 @@ export class ThreeDEngine {
   }
 
   get cameraMode(): CameraMode {
-    return this.camera.isOrthographicCamera ? 'orthographic' : 'perspective';
+    return this.camera instanceof THREE.OrthographicCamera ? 'orthographic' : 'perspective';
   }
 
   setCameraMode(mode: CameraMode): void {
@@ -90,14 +90,14 @@ export class ThreeDEngine {
 
   setOrthographicViewHeight(height: number): void {
     this.orthographicHeight = Math.max(height, 0.001);
-    if (this.camera.isOrthographicCamera) this.resize();
+    if (this.camera instanceof THREE.OrthographicCamera) this.resize();
   }
 
   resize(): void {
     const { clientWidth: width, clientHeight: height } = this.options.container;
     const aspect = Math.max(width, 1) / Math.max(height, 1);
 
-    if (this.camera.isPerspectiveCamera) {
+    if (this.camera instanceof THREE.PerspectiveCamera) {
       this.camera.aspect = aspect;
     } else {
       const halfHeight = this.orthographicHeight / 2;
