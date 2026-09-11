@@ -48,6 +48,7 @@ jobs:
           rm -rf _site
           mkdir -p _site
           cp -R dist/apps/frontend/client/browser/. _site/
+          cp _site/index.html _site/404.html
           touch _site/.nojekyll
 
       - name: Setup Pages
