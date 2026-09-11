@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { FloorField3dComponent } from './floor-field-3d.component';
 
 type FloorFieldView = 'geometry' | 'layers' | '3d';
 type FloorLayerKind = 'finish' | 'screed' | 'insulation' | 'structure' | 'ceiling' | 'custom';
@@ -28,7 +29,7 @@ interface FloorLayer {
 @Component({
   selector: 'smartbarn-floor-field-page',
   standalone: true,
-  imports: [TranslocoPipe],
+  imports: [TranslocoPipe, FloorField3dComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './floor-field.page.html',
   styleUrl: './floor-field.page.scss',
