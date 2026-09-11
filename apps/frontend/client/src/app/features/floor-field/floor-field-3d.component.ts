@@ -72,17 +72,33 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
     const size=box.getSize(new THREE.Vector3());
     const camera=this.engine.camera;
     const controls=this.engine.controls;
+    camera.zoom=1;
+    camera.updateProjectionMatrix();
+
+    // Keep the current isometric-like viewing direction, but solve the camera
+    // distance from the projected corners of the actual floor-field bounds.
+    // This guarantees that Center means "fit the whole slab", not merely
+    // "look at its centre". A small margin keeps every edge away from the UI.
+    const direction=new THREE.Vector3(1,.72,1).normalize();
+    const up=camera.up.clone().normalize();
+    const right=new THREE.Vector3().crossVectors(direction,up).normalize();
+    const viewUp=new THREE.Vector3().crossVectors(right,direction).normalize();
+    let projectedHalfWidth=0;
+    let projectedHalfHeight=0;
+    for(const x of [-size.x/2,size.x/2])for(const y of [-size.y/2,size.y/2])for(const z of [-size.z/2,size.z/2]){
+      const corner=new THREE.Vector3(x,y,z);
+      projectedHalfWidth=Math.max(projectedHalfWidth,Math.abs(corner.dot(right)));
+      projectedHalfHeight=Math.max(projectedHalfHeight,Math.abs(corner.dot(viewUp)));
+    }
     const vFov=THREE.MathUtils.degToRad(camera.fov);
     const aspect=Math.max(camera.aspect,.001);
     const hFov=2*Math.atan(Math.tan(vFov/2)*aspect);
-    const halfWidth=size.x/2;
-    const halfHeight=Math.max(size.y,size.z*.6)/2;
-    const fitWidth=halfWidth/Math.tan(hFov/2);
-    const fitHeight=halfHeight/Math.tan(vFov/2);
-    const distance=Math.max(4,fitWidth,fitHeight,Math.max(size.x,size.z)*.72)*1.25;
-    const direction=new THREE.Vector3(1,.72,1).normalize();
+    const margin=1.18;
+    const fitWidth=projectedHalfWidth/Math.tan(hFov/2);
+    const fitHeight=projectedHalfHeight/Math.tan(vFov/2);
+    const distance=Math.max(4,fitWidth,fitHeight)*margin;
+
     camera.position.copy(center).addScaledVector(direction,distance);
-    camera.zoom=1;
     camera.near=Math.max(.01,distance/1000);
     camera.far=Math.max(1000,distance*100);
     camera.updateProjectionMatrix();
@@ -90,8 +106,6 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
     camera.lookAt(center);
     controls.update();
     controls.saveState();
-    controls.reset();
-    controls.update();
     this.hasInitialView=true;
     this.saveViewState();
     this.engine.render();
