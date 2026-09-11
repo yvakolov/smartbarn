@@ -1,68 +1,11 @@
 {
-  "app": {
-    "name": "Smart Barn",
-    "floorField": "Перекрытия",
-    "settings": "Настройки",
-    "logout": "Выйти"
-  },
-  "auth": {
-    "title": "Вход в Smart Barn",
-    "subtitle": "Инженерная платформа для проектирования Barn House",
-    "google": "Продолжить с Google"
-  },
-  "settings": {
-    "title": "Настройки",
-    "appearance": "Оформление",
-    "theme": "Тема",
-    "themeSystem": "Системная",
-    "themeLight": "Светлая",
-    "themeDark": "Тёмная",
-    "language": "Язык",
-    "languageRu": "Русский",
-    "languageEn": "English"
-  },
+  "app": {"name":"Smart Barn","floorField":"Перекрытия","settings":"Настройки","logout":"Выйти"},
+  "auth": {"title":"Вход в Smart Barn","subtitle":"Инженерная платформа для проектирования Barn House","google":"Продолжить с Google"},
+  "settings": {"title":"Настройки","appearance":"Оформление","theme":"Тема","themeSystem":"Системная","themeLight":"Светлая","themeDark":"Тёмная","language":"Язык","languageRu":"Русский","languageEn":"English"},
   "floorField": {
-    "title": "Редактор перекрытия",
-    "geometry": "Геометрия",
-    "layers": "Слои",
-    "view3d": "3D",
-    "length": "Длина",
-    "width": "Ширина",
-    "elevation": "Отметка",
-    "mm": "мм",
-    "above": "Выше базовой плоскости",
-    "below": "Ниже базовой плоскости",
-    "thickness": "Толщина",
-    "referencePlane": "Базовая плоскость",
-    "preview": "Предпросмотр",
-    "properties": "Параметры",
-    "area": "Площадь",
-    "perimeter": "Периметр",
-    "swap": "Поменять длину и ширину",
-    "reset": "Сбросить",
-    "layerAssembly": "Состав перекрытия",
-    "layerHint": "Меняй толщину и порядок слоёв. На компьютере слои можно перетаскивать мышью.",
-    "addLayer": "Добавить слой",
-    "removeLayer": "Удалить слой",
-    "moveUp": "Переместить выше",
-    "moveDown": "Переместить ниже",
-    "totalThickness": "Общая толщина",
-    "noLayers": "Слои не добавлены",
-    "layerFinish": "Напольное покрытие",
-    "layerScreed": "Стяжка",
-    "layerInsulation": "Теплоизоляция",
-    "layerStructure": "Несущая конструкция",
-    "layerCeiling": "Отделка потолка",
-    "layerCustom": "Новый слой",
-    "layerKind": {
-      "finish": "Финишный слой",
-      "screed": "Стяжка",
-      "insulation": "Изоляция",
-      "structure": "Конструкция",
-      "ceiling": "Отделка снизу",
-      "custom": "Пользовательский"
-    },
-    "layersNext": "Редактор состава перекрытия будет следующим рабочим блоком",
-    "view3dNext": "3D-представление будет подключено после редактора слоёв"
+    "title":"Редактор перекрытия","geometry":"Геометрия","layers":"Слои","view3d":"3D","length":"Длина","width":"Ширина","elevation":"Отметка","mm":"мм","above":"Выше базовой плоскости","below":"Ниже базовой плоскости","thickness":"Толщина","referencePlane":"Базовая плоскость","preview":"Предпросмотр","properties":"Параметры","area":"Площадь","perimeter":"Периметр","swap":"Поменять длину и ширину","reset":"Сбросить","layerAssembly":"Состав перекрытия","layerHint":"Меняй толщину и порядок слоёв. На компьютере слои можно перетаскивать мышью.","addLayer":"Добавить слой","removeLayer":"Удалить слой","moveUp":"Переместить выше","moveDown":"Переместить ниже","totalThickness":"Общая толщина","noLayers":"Слои не добавлены","layerFinish":"Напольное покрытие","layerScreed":"Стяжка","layerInsulation":"Теплоизоляция","layerStructure":"Несущая конструкция","layerCeiling":"Отделка потолка","layerCustom":"Новый слой",
+    "layerKind":{"finish":"Финишный слой","screed":"Стяжка","insulation":"Изоляция","structure":"Конструкция","ceiling":"Отделка снизу","custom":"Пользовательский"},
+    "viewCube":{"navigation":"Навигационный куб","top":"СВЕРХУ","bottom":"СНИЗУ","front":"СПЕРЕДИ","back":"СЗАДИ","left":"СЛЕВА","right":"СПРАВА"},
+    "layersNext":"Редактор состава перекрытия будет следующим рабочим блоком","view3dNext":"3D-представление будет подключено после редактора слоёв"
   }
 }
