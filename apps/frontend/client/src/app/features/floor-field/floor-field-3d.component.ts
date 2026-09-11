@@ -8,7 +8,7 @@ interface FloorLayer3d { readonly id: number; readonly kind: string; readonly na
 
 @Component({
   selector: 'smartbarn-floor-field-3d', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<div class="viewport-shell"><div class="viewport-toolbar"><button type="button" [class.active]="navigationMode() === 'trackpad'" (click)="setNavigationMode('trackpad')">Trackpad</button><button type="button" [class.active]="navigationMode() === 'mouse'" (click)="setNavigationMode('mouse')">Mouse</button><button type="button" (click)="fitView()">Center</button></div><div #viewport class="viewport"></div><div class="viewport-hint">{{ navigationMode() === 'trackpad' ? '1 finger rotate · 2 fingers pan · pinch zoom' : 'Left rotate · Right pan · Wheel zoom' }}</div></div>`,
+  template: `<div class="viewport-shell"><div class="viewport-toolbar"><button type="button" [class.active]="navigationMode() === 'trackpad'" (click)="setNavigationMode('trackpad')">Trackpad</button><button type="button" [class.active]="navigationMode() === 'mouse'" (click)="setNavigationMode('mouse')">Mouse</button><button type="button" (click)="fitView()">Center</button></div><div #viewport class="viewport"></div><div class="viewport-hint">{{ navigationMode() === 'trackpad' ? '1 finger rotate · 2 fingers move · pinch zoom' : 'Left rotate · Right move · Wheel zoom' }}</div></div>`,
   styles: `:host{display:block}.viewport-shell{position:relative;min-height:30rem;overflow:hidden;border-radius:var(--sb-radius-3);background:radial-gradient(circle at 50% 45%,var(--sb-accent-soft),transparent 42%),var(--sb-surface)}.viewport{width:100%;height:clamp(30rem,68vh,54rem)}.viewport-toolbar{position:absolute;z-index:3;top:.75rem;left:50%;transform:translateX(-50%);display:flex;gap:.35rem;padding:.3rem;border:1px solid var(--sb-border);border-radius:999px;background:color-mix(in srgb,var(--sb-surface-raised) 92%,transparent);backdrop-filter:blur(8px)}.viewport-toolbar button{border:0;border-radius:999px;padding:.42rem .72rem;background:transparent;color:var(--sb-text-muted);cursor:pointer}.viewport-toolbar button.active{background:var(--sb-accent-soft);color:var(--sb-text)}.viewport-hint{position:absolute;right:.75rem;bottom:.75rem;border:1px solid var(--sb-border);border-radius:var(--sb-radius-2);background:color-mix(in srgb,var(--sb-surface-raised) 88%,transparent);padding:.4rem .55rem;color:var(--sb-text-muted);font-size:.72rem;pointer-events:none;backdrop-filter:blur(8px)}`,
 })
 export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -16,15 +16,93 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
   @ViewChild('viewport', { static: true }) private readonly viewport?: ElementRef<HTMLDivElement>;
   readonly navigationMode = signal<NavigationMode>('trackpad');
   private engine?: ThreeDEngine; private floorObject?: THREE.Object3D; private frameId?: number; private resizeObserver?: ResizeObserver;
-  ngAfterViewInit(): void { const container=this.viewport?.nativeElement;if(!container)return;this.engine=new ThreeDEngine({container,antialias:true});this.engine.renderer.setClearColor(0x000000,0);this.engine.controls.minDistance=2;this.engine.controls.maxDistance=80;const grid=new THREE.GridHelper(30,30,0x64748b,0x94a3b8);grid.position.y=-.002;grid.material.transparent=true;grid.material.opacity=.28;this.engine.scene.add(grid);this.resizeObserver=new ResizeObserver(()=>{this.engine?.resize();this.fitView();});this.resizeObserver.observe(container);this.applyNavigationMode();this.rebuildScene();this.animate(); }
+
+  ngAfterViewInit(): void {
+    const container=this.viewport?.nativeElement;if(!container)return;
+    this.engine=new ThreeDEngine({container,antialias:true});
+    this.engine.renderer.setClearColor(0x000000,0);
+    this.engine.controls.minDistance=.5;
+    this.engine.controls.maxDistance=200;
+    const grid=new THREE.GridHelper(30,30,0x64748b,0x94a3b8);grid.position.y=-.002;grid.material.transparent=true;grid.material.opacity=.28;this.engine.scene.add(grid);
+    this.resizeObserver=new ResizeObserver(()=>{this.engine?.resize();this.fitView();});this.resizeObserver.observe(container);
+    this.engine.renderer.domElement.addEventListener('wheel',this.handleTrackpadWheel,{capture:true,passive:false});
+    this.applyNavigationMode();this.rebuildScene();this.animate();
+  }
+
   ngOnChanges(_changes:SimpleChanges):void{if(this.engine)this.rebuildScene();}
-  ngOnDestroy():void{if(this.frameId!==undefined)cancelAnimationFrame(this.frameId);this.resizeObserver?.disconnect();this.disposeFloorObject();this.engine?.dispose();}
+
+  ngOnDestroy():void{
+    if(this.frameId!==undefined)cancelAnimationFrame(this.frameId);
+    this.resizeObserver?.disconnect();
+    this.engine?.renderer.domElement.removeEventListener('wheel',this.handleTrackpadWheel,true);
+    this.disposeFloorObject();this.engine?.dispose();
+  }
+
   setNavigationMode(mode:NavigationMode):void{this.navigationMode.set(mode);this.applyNavigationMode();}
-  fitView():void{if(!this.engine)return;const size=Math.max(this.lengthMm,this.widthMm)*.001;const distance=Math.max(7,size*1.15);this.engine.camera.position.set(distance,distance*.72,distance);this.engine.controls.target.set(0,-this.totalThicknessMeters()/2,0);this.engine.camera.lookAt(this.engine.controls.target);this.engine.controls.update();}
-  private applyNavigationMode():void{if(!this.engine)return;const c=this.engine.controls;c.enableDamping=true;c.dampingFactor=.08;c.screenSpacePanning=true;if(this.navigationMode()==='trackpad'){c.mouseButtons.LEFT=THREE.MOUSE.ROTATE;c.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;c.mouseButtons.RIGHT=THREE.MOUSE.PAN;c.touches.ONE=THREE.TOUCH.ROTATE;c.touches.TWO=THREE.TOUCH.DOLLY_PAN;}else{c.mouseButtons.LEFT=THREE.MOUSE.ROTATE;c.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;c.mouseButtons.RIGHT=THREE.MOUSE.PAN;c.touches.ONE=THREE.TOUCH.ROTATE;c.touches.TWO=THREE.TOUCH.DOLLY_PAN;}}
-  private rebuildScene():void{if(!this.engine)return;this.disposeFloorObject();const model:FloorFieldModel={id:'floor-field-preview',entity:'floor-field',geometry:{lengthMm:this.lengthMm,widthMm:this.widthMm,elevationMm:this.elevationMm},layers:this.layers.map((layer,index)=>({id:String(layer.id),name:layer.name,type:layer.kind,thicknessMm:layer.thicknessMm,color:layer.color??this.layerColor(layer.kind,index)}))};this.floorObject=floorFieldToObject3D(model);this.floorObject.position.y=this.elevationMm*.001;this.engine.root.add(this.floorObject);this.fitView();}
+
+  fitView():void{
+    if(!this.engine||!this.floorObject)return;
+    const box=new THREE.Box3().setFromObject(this.floorObject);
+    if(box.isEmpty())return;
+    const center=box.getCenter(new THREE.Vector3());
+    const size=box.getSize(new THREE.Vector3());
+    const camera=this.engine.camera;
+    const vFov=THREE.MathUtils.degToRad(camera.fov);
+    const hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(camera.aspect,.001));
+    const fitHeightDistance=(size.y+size.z*.7)/(2*Math.tan(vFov/2));
+    const fitWidthDistance=(size.x+size.z*.35)/(2*Math.tan(hFov/2));
+    const distance=Math.max(4,fitHeightDistance,fitWidthDistance,Math.max(size.x,size.z)*.82)*1.28;
+    const direction=new THREE.Vector3(1,.72,1).normalize();
+    camera.position.copy(center).addScaledVector(direction,distance);
+    camera.near=Math.max(.01,distance/1000);
+    camera.far=Math.max(1000,distance*100);
+    camera.updateProjectionMatrix();
+    this.engine.controls.target.copy(center);
+    camera.lookAt(center);
+    this.engine.controls.update();
+  }
+
+  private applyNavigationMode():void{
+    if(!this.engine)return;
+    const c=this.engine.controls;c.enableDamping=true;c.dampingFactor=.08;c.screenSpacePanning=true;
+    c.mouseButtons.LEFT=THREE.MOUSE.ROTATE;c.mouseButtons.MIDDLE=THREE.MOUSE.DOLLY;c.mouseButtons.RIGHT=THREE.MOUSE.PAN;
+    c.touches.ONE=THREE.TOUCH.ROTATE;c.touches.TWO=THREE.TOUCH.DOLLY_PAN;
+  }
+
+  private readonly handleTrackpadWheel=(event:WheelEvent):void=>{
+    if(!this.engine||this.navigationMode()!=='trackpad'||event.ctrlKey)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const camera=this.engine.camera;
+    const controls=this.engine.controls;
+    const viewportHeight=Math.max(this.engine.renderer.domElement.clientHeight,1);
+    const distance=camera.position.distanceTo(controls.target);
+    const worldPerPixel=(2*distance*Math.tan(THREE.MathUtils.degToRad(camera.fov)/2))/viewportHeight;
+    const right=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0).normalize();
+    const up=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1).normalize();
+    const pan=new THREE.Vector3()
+      .addScaledVector(right,event.deltaX*worldPerPixel)
+      .addScaledVector(up,-event.deltaY*worldPerPixel);
+    camera.position.add(pan);
+    controls.target.add(pan);
+    controls.update();
+  };
+
+  private rebuildScene():void{
+    if(!this.engine)return;
+    this.disposeFloorObject();
+    const model:FloorFieldModel={id:'floor-field-preview',entity:'floor-field',geometry:{lengthMm:this.lengthMm,widthMm:this.widthMm,elevationMm:this.elevationMm},layers:this.layers.map((layer,index)=>({id:String(layer.id),name:layer.name,type:layer.kind,thicknessMm:layer.thicknessMm,color:layer.color??this.layerColor(layer.kind,index)}))};
+    this.floorObject=floorFieldToObject3D(model);this.floorObject.position.y=this.elevationMm*.001;this.engine.root.add(this.floorObject);this.fitView();
+  }
+
   private animate=():void=>{this.engine?.render();this.frameId=requestAnimationFrame(this.animate);};
-  private disposeFloorObject():void{if(!this.floorObject||!this.engine)return;this.engine.root.remove(this.floorObject);this.floorObject.traverse((object)=>{if(!(object instanceof THREE.Mesh))return;object.geometry.dispose();const materials=Array.isArray(object.material)?object.material:[object.material];materials.forEach((material)=>material.dispose());});this.floorObject=undefined;}
-  private totalThicknessMeters():number{return this.layers.reduce((sum,layer)=>sum+layer.thicknessMm,0)*.001;}
+
+  private disposeFloorObject():void{
+    if(!this.floorObject||!this.engine)return;
+    this.engine.root.remove(this.floorObject);
+    this.floorObject.traverse((object)=>{if(!(object instanceof THREE.Mesh))return;object.geometry.dispose();const materials=Array.isArray(object.material)?object.material:[object.material];materials.forEach((material)=>material.dispose());});
+    this.floorObject=undefined;
+  }
+
   private layerColor(kind:string,index:number):string{const colors:Record<string,string>={sip:'#d9b36c',finish:'#c58d5b',screed:'#a8a29e',insulation:'#eab308',structure:'#64748b',ceiling:'#e2e8f0',custom:'#38bdf8'};return colors[kind]??['#38bdf8','#a78bfa','#34d399'][index%3];}
 }
