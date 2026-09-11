@@ -20,6 +20,8 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
   @ViewChild('viewport', { static: true }) private readonly viewport?: ElementRef<HTMLDivElement>;
   readonly navigationMode = signal<NavigationMode>(savedNavigationMode);
   private engine?: ThreeDEngine; private floorObject?: THREE.Object3D; private frameId?: number; private resizeObserver?: ResizeObserver; private hasInitialView = false;
+  private readonly raycaster = new THREE.Raycaster();
+  private trackpadOrbitActiveUntil = 0;
 
   ngAfterViewInit(): void {
     const container=this.viewport?.nativeElement;if(!container)return;
@@ -33,6 +35,8 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
     this.engine.controls.panSpeed=.9;
     this.engine.controls.zoomSpeed=1.15;
     this.engine.controls.screenSpacePanning=true;
+    // OrbitControls' native cursor-centric zoom is intentionally enabled for
+    // mouse wheel and trackpad pinch. The orbit pivot is handled separately.
     this.engine.controls.zoomToCursor=true;
     const grid=new THREE.GridHelper(30,30,0x64748b,0x94a3b8);grid.position.y=-.002;grid.material.transparent=true;grid.material.opacity=.28;this.engine.scene.add(grid);
     this.resizeObserver=new ResizeObserver(()=>this.engine?.resize());this.resizeObserver.observe(container);
@@ -133,8 +137,10 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   private readonly handleMousePointerDown=(event:PointerEvent):void=>{
-    if(!this.engine||this.navigationMode()!=='mouse'||event.pointerType!=='mouse'||event.button!==1)return;
-    this.engine.controls.mouseButtons.MIDDLE=event.shiftKey?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;
+    if(!this.engine||this.navigationMode()!=='mouse'||event.pointerType!=='mouse')return;
+    if(event.button===1)this.engine.controls.mouseButtons.MIDDLE=event.shiftKey?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;
+    const startsOrbit=(event.button===0)||(event.button===1&&!event.shiftKey);
+    if(startsOrbit)this.setOrbitPivotFromClientPoint(event.clientX,event.clientY);
   };
 
   private readonly preventContextMenu=(event:MouseEvent):void=>event.preventDefault();
@@ -143,9 +149,17 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
   private readonly handleTrackpadWheel=(event:WheelEvent):void=>{
     if(!this.engine||this.navigationMode()!=='trackpad')return;
     // Browsers expose a trackpad pinch as Ctrl+wheel. Leave that event to
-    // OrbitControls so pinch is reserved exclusively for zooming.
+    // OrbitControls: zoomToCursor makes the point under the fingers the zoom anchor.
     if(event.ctrlKey)return;
     event.preventDefault();event.stopImmediatePropagation();
+
+    // Treat a burst of wheel events as one two-finger orbit gesture. The first
+    // event picks the visible floor point under the cursor as the orbit pivot,
+    // matching SketchUp's object-relative navigation instead of a fixed camera target.
+    const now=performance.now();
+    if(now>this.trackpadOrbitActiveUntil)this.setOrbitPivotFromClientPoint(event.clientX,event.clientY);
+    this.trackpadOrbitActiveUntil=now+180;
+
     const camera=this.engine.camera;const controls=this.engine.controls;
     const offset=camera.position.clone().sub(controls.target);
     const spherical=new THREE.Spherical().setFromVector3(offset);
@@ -158,6 +172,21 @@ export class FloorField3dComponent implements AfterViewInit, OnChanges, OnDestro
     controls.update();
     this.saveViewState();
   };
+
+  private setOrbitPivotFromClientPoint(clientX:number,clientY:number):void{
+    if(!this.engine||!this.floorObject)return;
+    const canvas=this.engine.renderer.domElement;
+    const rect=canvas.getBoundingClientRect();
+    if(rect.width<=0||rect.height<=0)return;
+    const pointer=new THREE.Vector2(
+      ((clientX-rect.left)/rect.width)*2-1,
+      -((clientY-rect.top)/rect.height)*2+1,
+    );
+    this.raycaster.setFromCamera(pointer,this.engine.camera);
+    const hit=this.raycaster.intersectObject(this.floorObject,true)[0];
+    if(!hit)return;
+    this.engine.controls.target.copy(hit.point);
+  }
 
   private rebuildScene():void{
     if(!this.engine)return;this.disposeFloorObject();
