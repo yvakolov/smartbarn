@@ -1,176 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
 import { FloorField3dComponent } from './floor-field-3d.component';
 
 type FloorFieldView = 'geometry' | 'layers' | '3d';
-type FloorLayerKind = 'sip' | 'finish' | 'screed' | 'insulation' | 'structure' | 'ceiling' | 'custom';
 type ResizeHandle = 'length' | 'width' | 'both';
+interface PreviewRect { readonly x:number; readonly y:number; readonly width:number; readonly height:number; }
+interface FloorLayer { readonly id:number; readonly kind:string; readonly name:string; readonly thicknessMm:number; readonly color:string; }
 
-interface PreviewRect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-interface FloorLayer {
-  readonly id: number;
-  readonly kind: FloorLayerKind;
-  readonly name: string;
-  readonly thicknessMm: number;
-  readonly color: string;
-}
-
-@Component({
-  selector: 'smartbarn-floor-field-page',
-  standalone: true,
-  imports: [TranslocoPipe, FloorField3dComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './floor-field.page.html',
-  styleUrl: './floor-field.page.scss',
-})
+@Component({selector:'smartbarn-floor-field-page',standalone:true,imports:[FloorField3dComponent],changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./floor-field.page.html',styleUrl:'./floor-field.page.scss'})
 export class FloorFieldPage {
-  private static readonly GRID_STEP_MM = 100;
-  private static readonly MIN_DIMENSION_MM = 500;
-  private static readonly MAX_DIMENSION_MM = 50_000;
-  private static readonly PREVIEW_MAX_WIDTH = 720;
-  private static readonly PREVIEW_MAX_HEIGHT = 440;
-  private nextLayerId = 2;
-  private draggedLayerId: number | null = null;
-  private dragResizeState: { handle: ResizeHandle; startX: number; startY: number; startLength: number; startWidth: number } | null = null;
-
-  readonly lengthMm = signal(9_000);
-  readonly widthMm = signal(6_000);
-  readonly elevationMm = signal(0);
-  readonly activeView = signal<FloorFieldView>('geometry');
-  readonly snapToGrid = signal(true);
-  readonly layers = signal<readonly FloorLayer[]>([
-    { id: 1, kind: 'sip', name: 'SIP-панель 224 мм', thicknessMm: 224, color: '#d9b36c' },
-  ]);
-  readonly dragOverLayerId = signal<number | null>(null);
-  readonly dragOverPosition = signal<'before' | 'after' | null>(null);
-
-  readonly areaSquareMeters = computed(() => Number(((this.lengthMm() * this.widthMm()) / 1_000_000).toFixed(2)));
-  readonly perimeterMeters = computed(() => Number((((this.lengthMm() + this.widthMm()) * 2) / 1000).toFixed(2)));
-  readonly totalLayerThicknessMm = computed(() => this.layers().reduce((total, layer) => total + layer.thicknessMm, 0));
-  readonly previewRect = computed<PreviewRect>(() => {
-    const availableWidth = FloorFieldPage.PREVIEW_MAX_WIDTH;
-    const availableHeight = FloorFieldPage.PREVIEW_MAX_HEIGHT;
-    const aspect = this.lengthMm() / this.widthMm();
-    const availableAspect = availableWidth / availableHeight;
-    const width = aspect >= availableAspect ? availableWidth : availableHeight * aspect;
-    const height = aspect >= availableAspect ? availableWidth / aspect : availableHeight;
-    return { x: (1000 - width) / 2, y: (650 - height) / 2, width, height };
-  });
-
-  setActiveView(view: FloorFieldView): void { this.activeView.set(view); }
-  updateLength(event: Event): void { this.lengthMm.set(this.snapDimension(this.readDimension(event, this.lengthMm()))); }
-  updateWidth(event: Event): void { this.widthMm.set(this.snapDimension(this.readDimension(event, this.widthMm()))); }
-  updateElevation(event: Event): void { this.elevationMm.set(this.readNumber(event, this.elevationMm(), -10_000, 50_000)); }
-  toggleSnapToGrid(): void { this.snapToGrid.update((value) => !value); }
-
-  startResize(handle: ResizeHandle, event: PointerEvent): void {
-    event.preventDefault();
-    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
-    this.dragResizeState = { handle, startX: event.clientX, startY: event.clientY, startLength: this.lengthMm(), startWidth: this.widthMm() };
-  }
-
-  resizeGeometry(event: PointerEvent): void {
-    const state = this.dragResizeState;
-    if (!state) return;
-    const rect = this.previewRect();
-    const pxPerLengthMm = rect.width / state.startLength;
-    const pxPerWidthMm = rect.height / state.startWidth;
-    if (state.handle === 'length' || state.handle === 'both') {
-      this.lengthMm.set(this.snapDimension(state.startLength + (event.clientX - state.startX) / Math.max(pxPerLengthMm, 0.0001)));
-    }
-    if (state.handle === 'width' || state.handle === 'both') {
-      this.widthMm.set(this.snapDimension(state.startWidth + (event.clientY - state.startY) / Math.max(pxPerWidthMm, 0.0001)));
-    }
-  }
-
-  stopResize(): void { this.dragResizeState = null; }
-
-  updateLayerThickness(layerId: number, event: Event): void {
-    const layer = this.layers().find((item) => item.id === layerId);
-    if (!layer) return;
-    const thicknessMm = this.readNumber(event, layer.thicknessMm, 1, 2000);
-    this.layers.update((layers) => layers.map((item) => item.id === layerId ? { ...item, thicknessMm } : item));
-  }
-
-  updateLayerName(layerId: number, event: Event): void {
-    const name = (event.target as HTMLInputElement).value.trim() || 'Слой';
-    this.layers.update((layers) => layers.map((item) => item.id === layerId ? { ...item, name } : item));
-  }
-
-  updateLayerColor(layerId: number, event: Event): void {
-    const color = (event.target as HTMLInputElement).value;
-    this.layers.update((layers) => layers.map((item) => item.id === layerId ? { ...item, color } : item));
-  }
-
-  addLayer(position: 'top' | 'bottom'): void {
-    const id = this.nextLayerId++;
-    const layer: FloorLayer = { id, kind: 'custom', name: 'Новый слой', thicknessMm: 20, color: '#38bdf8' };
-    this.layers.update((layers) => position === 'top' ? [layer, ...layers] : [...layers, layer]);
-  }
-
-  removeLayer(layerId: number): void { this.layers.update((layers) => layers.filter((layer) => layer.id !== layerId)); }
-  moveLayer(layerId: number, direction: -1 | 1): void {
-    this.layers.update((layers) => {
-      const index = layers.findIndex((layer) => layer.id === layerId);
-      const targetIndex = index + direction;
-      if (index < 0 || targetIndex < 0 || targetIndex >= layers.length) return layers;
-      const reordered = [...layers];
-      [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
-      return reordered;
-    });
-  }
-
-  startLayerDrag(layerId: number, event: DragEvent): void {
-    this.draggedLayerId = layerId;
-    event.dataTransfer?.setData('text/plain', String(layerId));
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-  }
-
-  allowLayerDrop(targetLayerId: number, event: DragEvent): void {
-    event.preventDefault();
-    const target = event.currentTarget as HTMLElement;
-    const box = target.getBoundingClientRect();
-    this.dragOverLayerId.set(targetLayerId);
-    this.dragOverPosition.set(event.clientY < box.top + box.height / 2 ? 'before' : 'after');
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-  }
-
-  dropLayer(targetLayerId: number, event: DragEvent): void {
-    event.preventDefault();
-    const sourceLayerId = this.draggedLayerId ?? Number(event.dataTransfer?.getData('text/plain'));
-    const position = this.dragOverPosition() ?? 'before';
-    this.clearDragState();
-    if (!Number.isFinite(sourceLayerId) || sourceLayerId === targetLayerId) return;
-    this.layers.update((layers) => {
-      const sourceIndex = layers.findIndex((layer) => layer.id === sourceLayerId);
-      let targetIndex = layers.findIndex((layer) => layer.id === targetLayerId);
-      if (sourceIndex < 0 || targetIndex < 0) return layers;
-      const reordered = [...layers];
-      const [moved] = reordered.splice(sourceIndex, 1);
-      if (sourceIndex < targetIndex) targetIndex--;
-      reordered.splice(position === 'after' ? targetIndex + 1 : targetIndex, 0, moved);
-      return reordered;
-    });
-  }
-
-  endLayerDrag(): void { this.clearDragState(); }
-  swapDimensions(): void { const length = this.lengthMm(); this.lengthMm.set(this.widthMm()); this.widthMm.set(length); }
-  resetGeometry(): void { this.lengthMm.set(9_000); this.widthMm.set(6_000); this.elevationMm.set(0); }
-
-  private clearDragState(): void { this.draggedLayerId = null; this.dragOverLayerId.set(null); this.dragOverPosition.set(null); }
-  private snapDimension(value: number): number {
-    const snapped = this.snapToGrid() ? Math.round(value / FloorFieldPage.GRID_STEP_MM) * FloorFieldPage.GRID_STEP_MM : Math.round(value);
-    return Math.min(FloorFieldPage.MAX_DIMENSION_MM, Math.max(FloorFieldPage.MIN_DIMENSION_MM, snapped));
-  }
-  private readDimension(event: Event, fallback: number): number { return this.readNumber(event, fallback, FloorFieldPage.MIN_DIMENSION_MM, FloorFieldPage.MAX_DIMENSION_MM); }
-  private readNumber(event: Event, fallback: number, min: number, max: number): number {
-    const value = Number((event.target as HTMLInputElement).value);
-    return Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
-  }
+ private static readonly MIN=500; private static readonly MAX=50000; private nextLayerId=4; private draggedLayerId:number|null=null; private dragResizeState:{handle:ResizeHandle;startX:number;startY:number;startLength:number;startWidth:number}|null=null;
+ readonly lengthMm=signal(9000); readonly widthMm=signal(6000); readonly elevationMm=signal(0); readonly gridStepMm=signal(100); readonly snapToGrid=signal(true); readonly activeView=signal<FloorFieldView>('geometry'); readonly inspectorOpen=signal(true);
+ readonly layers=signal<readonly FloorLayer[]>([{id:1,kind:'osb',name:'OSB верхний',thicknessMm:12,color:'#f5d77a'},{id:2,kind:'structure',name:'Балки + теплоизоляция',thicknessMm:200,color:'#e58b2a'},{id:3,kind:'osb',name:'OSB нижний',thicknessMm:12,color:'#f5d77a'}]);
+ readonly dragOverLayerId=signal<number|null>(null); readonly dragOverPosition=signal<'before'|'after'|null>(null);
+ readonly totalLayerThicknessMm=computed(()=>this.layers().reduce((s,l)=>s+l.thicknessMm,0));
+ readonly previewRect=computed<PreviewRect>(()=>{const aw=760,ah=500,a=this.lengthMm()/this.widthMm(),aa=aw/ah,w=a>=aa?aw:ah*a,h=a>=aa?aw/a:ah;return{x:(1000-w)/2,y:(650-h)/2,width:w,height:h};});
+ setActiveView(v:FloorFieldView){this.activeView.set(v);} toggleInspector(){this.inspectorOpen.update(v=>!v);} toggleSnapToGrid(){this.snapToGrid.update(v=>!v);}
+ updateLength(e:Event){this.lengthMm.set(this.snap(this.read(e,this.lengthMm(),FloorFieldPage.MIN,FloorFieldPage.MAX)));} updateWidth(e:Event){this.widthMm.set(this.snap(this.read(e,this.widthMm(),FloorFieldPage.MIN,FloorFieldPage.MAX)));} updateElevation(e:Event){this.elevationMm.set(this.read(e,this.elevationMm(),-10000,50000));} updateGridStep(e:Event){this.gridStepMm.set(this.read(e,this.gridStepMm(),10,5000));}
+ swapDimensions(){const l=this.lengthMm();this.lengthMm.set(this.widthMm());this.widthMm.set(l);} resetGeometry(){this.lengthMm.set(9000);this.widthMm.set(6000);this.elevationMm.set(0);this.gridStepMm.set(100);this.snapToGrid.set(true);}
+ startResize(handle:ResizeHandle,e:PointerEvent){e.preventDefault();(e.currentTarget as Element).setPointerCapture?.(e.pointerId);this.dragResizeState={handle,startX:e.clientX,startY:e.clientY,startLength:this.lengthMm(),startWidth:this.widthMm()};}
+ resizeGeometry(e:PointerEvent){const s=this.dragResizeState;if(!s)return;const r=this.previewRect(),pxL=r.width/s.startLength,pxW=r.height/s.startWidth;if(s.handle!=='width')this.lengthMm.set(this.snap(s.startLength+(e.clientX-s.startX)/Math.max(pxL,.0001)));if(s.handle!=='length')this.widthMm.set(this.snap(s.startWidth+(e.clientY-s.startY)/Math.max(pxW,.0001)));} stopResize(){this.dragResizeState=null;}
+ addLayer(position:'top'|'bottom'){const layer:FloorLayer={id:this.nextLayerId++,kind:'custom',name:'Новый слой',thicknessMm:20,color:'#8ab4f8'};this.layers.update(ls=>position==='top'?[layer,...ls]:[...ls,layer]);} removeLayer(id:number){this.layers.update(ls=>ls.filter(l=>l.id!==id));}
+ updateLayerName(id:number,e:Event){const name=(e.target as HTMLInputElement).value||'Слой';this.layers.update(ls=>ls.map(l=>l.id===id?{...l,name}:l));} updateLayerColor(id:number,e:Event){const color=(e.target as HTMLInputElement).value;this.layers.update(ls=>ls.map(l=>l.id===id?{...l,color}:l));} updateLayerThickness(id:number,e:Event){this.layers.update(ls=>ls.map(l=>l.id===id?{...l,thicknessMm:this.read(e,l.thicknessMm,1,2000)}:l));}
+ startLayerDrag(id:number,e:DragEvent){this.draggedLayerId=id;e.dataTransfer?.setData('text/plain',String(id));} allowLayerDrop(id:number,e:DragEvent){e.preventDefault();const b=(e.currentTarget as HTMLElement).getBoundingClientRect();this.dragOverLayerId.set(id);this.dragOverPosition.set(e.clientY<b.top+b.height/2?'before':'after');} dropLayer(id:number,e:DragEvent){e.preventDefault();const src=this.draggedLayerId??Number(e.dataTransfer?.getData('text/plain')),pos=this.dragOverPosition()??'before';this.endLayerDrag();if(src===id)return;this.layers.update(ls=>{const a=[...ls],si=a.findIndex(l=>l.id===src);let ti=a.findIndex(l=>l.id===id);if(si<0||ti<0)return ls;const[m]=a.splice(si,1);if(si<ti)ti--;a.splice(pos==='after'?ti+1:ti,0,m);return a;});} endLayerDrag(){this.draggedLayerId=null;this.dragOverLayerId.set(null);this.dragOverPosition.set(null);}
+ private snap(v:number){const step=this.gridStepMm();const n=this.snapToGrid()?Math.round(v/step)*step:Math.round(v);return Math.min(FloorFieldPage.MAX,Math.max(FloorFieldPage.MIN,n));} private read(e:Event,f:number,min:number,max:number){const v=Number((e.target as HTMLInputElement).value);return Number.isFinite(v)?Math.min(max,Math.max(min,Math.round(v))):f;}
 }
