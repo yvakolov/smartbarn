@@ -1,68 +1,11 @@
 {
-  "app": {
-    "name": "Smart Barn",
-    "floorField": "Floor fields",
-    "settings": "Settings",
-    "logout": "Sign out"
-  },
-  "auth": {
-    "title": "Sign in to Smart Barn",
-    "subtitle": "Engineering platform for Barn House design",
-    "google": "Continue with Google"
-  },
-  "settings": {
-    "title": "Settings",
-    "appearance": "Appearance",
-    "theme": "Theme",
-    "themeSystem": "System",
-    "themeLight": "Light",
-    "themeDark": "Dark",
-    "language": "Language",
-    "languageRu": "Русский",
-    "languageEn": "English"
-  },
+  "app": {"name":"Smart Barn","floorField":"Floor fields","settings":"Settings","logout":"Sign out"},
+  "auth": {"title":"Sign in to Smart Barn","subtitle":"Engineering platform for Barn House design","google":"Continue with Google"},
+  "settings": {"title":"Settings","appearance":"Appearance","theme":"Theme","themeSystem":"System","themeLight":"Light","themeDark":"Dark","language":"Language","languageRu":"Русский","languageEn":"English"},
   "floorField": {
-    "title": "Floor field editor",
-    "geometry": "Geometry",
-    "layers": "Layers",
-    "view3d": "3D",
-    "length": "Length",
-    "width": "Width",
-    "elevation": "Elevation",
-    "mm": "mm",
-    "above": "Above datum plane",
-    "below": "Below datum plane",
-    "thickness": "Thickness",
-    "referencePlane": "Reference plane",
-    "preview": "Preview",
-    "properties": "Properties",
-    "area": "Area",
-    "perimeter": "Perimeter",
-    "swap": "Swap length and width",
-    "reset": "Reset",
-    "layerAssembly": "Floor assembly",
-    "layerHint": "Change layer thickness and order. On desktop, layers can also be reordered by drag and drop.",
-    "addLayer": "Add layer",
-    "removeLayer": "Remove layer",
-    "moveUp": "Move up",
-    "moveDown": "Move down",
-    "totalThickness": "Total thickness",
-    "noLayers": "No layers added",
-    "layerFinish": "Floor finish",
-    "layerScreed": "Screed",
-    "layerInsulation": "Thermal insulation",
-    "layerStructure": "Structural layer",
-    "layerCeiling": "Ceiling finish",
-    "layerCustom": "New layer",
-    "layerKind": {
-      "finish": "Finish",
-      "screed": "Screed",
-      "insulation": "Insulation",
-      "structure": "Structure",
-      "ceiling": "Lower finish",
-      "custom": "Custom"
-    },
-    "layersNext": "The floor assembly editor is the next working block",
-    "view3dNext": "The 3D view will be connected after the layers editor"
+    "title":"Floor field editor","geometry":"Geometry","layers":"Layers","view3d":"3D","length":"Length","width":"Width","elevation":"Elevation","mm":"mm","above":"Above datum plane","below":"Below datum plane","thickness":"Thickness","referencePlane":"Reference plane","preview":"Preview","properties":"Properties","area":"Area","perimeter":"Perimeter","swap":"Swap length and width","reset":"Reset","layerAssembly":"Floor assembly","layerHint":"Change layer thickness and order. On desktop, layers can also be reordered by drag and drop.","addLayer":"Add layer","removeLayer":"Remove layer","moveUp":"Move up","moveDown":"Move down","totalThickness":"Total thickness","noLayers":"No layers added","layerFinish":"Floor finish","layerScreed":"Screed","layerInsulation":"Thermal insulation","layerStructure":"Structural layer","layerCeiling":"Ceiling finish","layerCustom":"New layer",
+    "layerKind":{"finish":"Finish","screed":"Screed","insulation":"Insulation","structure":"Structure","ceiling":"Lower finish","custom":"Custom"},
+    "viewCube":{"navigation":"Navigation cube","top":"TOP","bottom":"BOTTOM","front":"FRONT","back":"BACK","left":"LEFT","right":"RIGHT"},
+    "layersNext":"The floor assembly editor is the next working block","view3dNext":"The 3D view will be connected after the layers editor"
   }
 }
