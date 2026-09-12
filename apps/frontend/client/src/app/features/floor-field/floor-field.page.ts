@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FloorField3dComponent } from './floor-field-3d.component';
 import {
   FloorFieldPreferencesStore,
@@ -10,10 +11,10 @@ import { FloorFieldStore } from './floor-field.store';
 type ResizeHandle = 'length' | 'width' | 'both';
 interface PreviewRect { readonly x:number; readonly y:number; readonly width:number; readonly height:number; }
 
-@Component({selector:'smartbarn-floor-field-page',standalone:true,imports:[FloorField3dComponent],changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./floor-field.page.html',styleUrl:'./floor-field.page.scss'})
+@Component({selector:'smartbarn-floor-field-page',standalone:true,imports:[FloorField3dComponent, TranslocoPipe],changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./floor-field.page.html',styleUrl:'./floor-field.page.scss'})
 export class FloorFieldPage {
  private static readonly MIN=500; private static readonly MAX=50000; private draggedLayerId:number|null=null; private dragResizeState:{handle:ResizeHandle;startX:number;startY:number;startLength:number;startWidth:number}|null=null;
- private readonly store=inject(FloorFieldStore); private readonly preferences=inject(FloorFieldPreferencesStore);
+ private readonly store=inject(FloorFieldStore); private readonly preferences=inject(FloorFieldPreferencesStore); private readonly transloco=inject(TranslocoService);
  readonly lengthMm=this.store.lengthMm; readonly widthMm=this.store.widthMm; readonly elevationMm=this.store.elevationMm; readonly layers=this.store.layers; readonly totalLayerThicknessMm=this.store.totalLayerThicknessMm;
  readonly gridStepMm=this.preferences.gridStepMm; readonly snapToGrid=this.preferences.snapToGrid; readonly activeView=this.preferences.activeView; readonly inspectorOpen=this.preferences.inspectorOpen; readonly show3dGrid=this.preferences.show3dGrid; readonly navigationMode=this.preferences.navigationMode; readonly cameraMode=this.preferences.cameraMode; readonly camera=this.preferences.camera; readonly hiddenLayerIds=this.preferences.hiddenLayerIds;
  readonly dragOverLayerId=signal<number|null>(null); readonly dragOverPosition=signal<'before'|'after'|null>(null);
@@ -27,7 +28,7 @@ export class FloorFieldPage {
  startResize(handle:ResizeHandle,e:PointerEvent){e.preventDefault();(e.currentTarget as Element).setPointerCapture?.(e.pointerId);this.dragResizeState={handle,startX:e.clientX,startY:e.clientY,startLength:this.lengthMm(),startWidth:this.widthMm()};}
  resizeGeometry(e:PointerEvent){const s=this.dragResizeState;if(!s)return;const r=this.previewRect(),pxL=r.width/s.startLength,pxW=r.height/s.startWidth;if(s.handle!=='width')this.store.setLength(this.snap(s.startLength+(e.clientX-s.startX)/Math.max(pxL,.0001)));if(s.handle!=='length')this.store.setWidth(this.snap(s.startWidth+(e.clientY-s.startY)/Math.max(pxW,.0001)));} stopResize(){this.dragResizeState=null;}
  addLayer(position:'top'|'bottom'){this.store.addLayer(position);} removeLayer(id:number){this.store.removeLayer(id);}
- updateLayerName(id:number,e:Event){const name=(e.target as HTMLInputElement).value||'Слой';this.store.updateLayer(id,{name});} updateLayerColor(id:number,e:Event){const color=(e.target as HTMLInputElement).value;this.store.updateLayer(id,{color});} updateLayerThickness(id:number,e:Event){const layer=this.layers().find(item=>item.id===id);if(!layer)return;this.store.updateLayer(id,{thicknessMm:this.read(e,layer.thicknessMm,1,2000)});}
+ updateLayerName(id:number,e:Event){const name=(e.target as HTMLInputElement).value||this.transloco.translate('floorField.layerFallback');this.store.updateLayer(id,{name});} updateLayerColor(id:number,e:Event){const color=(e.target as HTMLInputElement).value;this.store.updateLayer(id,{color});} updateLayerThickness(id:number,e:Event){const layer=this.layers().find(item=>item.id===id);if(!layer)return;this.store.updateLayer(id,{thicknessMm:this.read(e,layer.thicknessMm,1,2000)});}
  isLayerVisible(id:number){return !this.hiddenLayerIds().includes(id);} setLayerVisible(id:number,e:Event){this.preferences.setLayerVisible(id,(e.target as HTMLInputElement).checked);} showAllLayers(){this.preferences.showAllLayers();} hideAllLayers(){this.preferences.hideAllLayers(this.layers().map(layer=>layer.id));}
  onNavigationModeChange(mode:'trackpad'|'mouse'){this.preferences.setNavigationMode(mode);} onCameraModeChange(mode:CameraModePreference){this.preferences.setCameraMode(mode);} updateCameraMode(e:Event){const mode=(e.target as HTMLSelectElement).value as CameraModePreference;this.preferences.setCameraMode(mode);} onCameraChange(camera:{position:[number,number,number];target:[number,number,number];zoom:number}){this.preferences.setCamera(camera);}
  startLayerDrag(id:number,e:DragEvent){this.draggedLayerId=id;e.dataTransfer?.setData('text/plain',String(id));} allowLayerDrop(id:number,e:DragEvent){e.preventDefault();const b=(e.currentTarget as HTMLElement).getBoundingClientRect();this.dragOverLayerId.set(id);this.dragOverPosition.set(e.clientY<b.top+b.height/2?'before':'after');} dropLayer(id:number,e:DragEvent){e.preventDefault();const src=this.draggedLayerId??Number(e.dataTransfer?.getData('text/plain')),pos=this.dragOverPosition()??'before';this.endLayerDrag();if(src===id)return;this.store.reorderLayers(src,id,pos);} endLayerDrag(){this.draggedLayerId=null;this.dragOverLayerId.set(null);this.dragOverPosition.set(null);}
