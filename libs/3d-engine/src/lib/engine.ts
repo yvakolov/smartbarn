@@ -53,39 +53,61 @@ export class ThreeDEngine {
   setCameraMode(mode: CameraMode): void {
     if (this.cameraMode === mode) return;
 
+    // Apply and clear any pending OrbitControls damping before taking the snapshot.
+    // Otherwise the old inertial delta is applied to the newly created camera and
+    // makes a projection switch look like a view reset.
+    this.flushControlsDamping();
+
+    const current = this.camera;
     const target = this.controls.target.clone();
-    const direction = this.camera.position.clone().sub(target).normalize();
-    const up = this.camera.up.clone();
+    const position = current.position.clone();
+    const quaternion = current.quaternion.clone();
+    const up = current.up.clone();
+    const direction = position.clone().sub(target).normalize();
     const aspect = this.aspect();
 
-    if (mode === 'orthographic') {
-      const perspective = this.camera as THREE.PerspectiveCamera;
-      const distance = Math.max(0.001, perspective.position.distanceTo(target));
-      const visibleHeight =
+    let visibleHeight: number;
+    if (this.isPerspective(current)) {
+      const perspective = current as THREE.PerspectiveCamera;
+      const distance = Math.max(0.001, position.distanceTo(target));
+      visibleHeight =
         (2 * distance * Math.tan(THREE.MathUtils.degToRad(perspective.fov) / 2)) /
         Math.max(perspective.zoom, 0.001);
+    } else {
+      const orthographic = current as THREE.OrthographicCamera;
+      visibleHeight = this.orthographicHeight / Math.max(orthographic.zoom, 0.001);
+    }
+
+    if (mode === 'orthographic') {
       this.orthographicHeight = Math.max(visibleHeight, 0.001);
       const next = this.createOrthographicCamera(aspect);
-      next.position.copy(perspective.position);
+      next.position.copy(position);
+      next.quaternion.copy(quaternion);
       next.up.copy(up);
-      next.lookAt(target);
+      next.zoom = 1;
+      next.near = current.near;
+      next.far = current.far;
       next.updateProjectionMatrix();
       this.camera = next as EngineCamera;
     } else {
-      const orthographic = this.camera as THREE.OrthographicCamera;
-      const visibleHeight = this.orthographicHeight / Math.max(orthographic.zoom, 0.001);
       const next = this.createPerspectiveCamera(aspect);
-      const distance = visibleHeight / (2 * Math.tan(THREE.MathUtils.degToRad(next.fov) / 2));
+      const distance = Math.max(
+        0.001,
+        visibleHeight / (2 * Math.tan(THREE.MathUtils.degToRad(next.fov) / 2)),
+      );
       next.position.copy(target).addScaledVector(direction, distance);
+      next.quaternion.copy(quaternion);
       next.up.copy(up);
-      next.lookAt(target);
+      next.zoom = 1;
+      next.near = Math.max(0.01, Math.min(current.near, distance / 1000));
+      next.far = Math.max(current.far, distance * 100);
       next.updateProjectionMatrix();
       this.camera = next as EngineCamera;
     }
 
     this.controls.object = this.camera;
     this.controls.target.copy(target);
-    this.controls.update();
+    this.flushControlsDamping();
     this.resize();
   }
 
@@ -95,6 +117,11 @@ export class ThreeDEngine {
   }
 
   resize(): void {
+    // Resizing is also used immediately before fit/center operations. Clearing
+    // residual damping here guarantees that a centered camera remains centered
+    // instead of drifting on the next animation frames.
+    this.flushControlsDamping();
+
     const { clientWidth: width, clientHeight: height } = this.options.container;
     const aspect = Math.max(width, 1) / Math.max(height, 1);
 
@@ -125,6 +152,13 @@ export class ThreeDEngine {
     this.controls.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
+  }
+
+  private flushControlsDamping(): void {
+    const damping = this.controls.enableDamping;
+    this.controls.enableDamping = false;
+    this.controls.update();
+    this.controls.enableDamping = damping;
   }
 
   private isPerspective(camera: THREE.Camera): boolean {
