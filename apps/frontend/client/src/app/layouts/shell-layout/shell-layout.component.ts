@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
-  lucideArrowLeftRight,
+  lucideArrowDownUp,
   lucideChevronRight,
   lucideHouse,
   lucideLibrary,
@@ -14,7 +14,7 @@ import { MATERIAL_CATALOG_CHANGED_EVENT, MATERIAL_GROUPS, loadMaterialCatalog, t
 
 type Workspace='house'|'materials'|'exchange'|'settings';
 
-@Component({selector:'sb-shell-layout',standalone:true,imports:[RouterOutlet,RouterLink,RouterLinkActive,TranslocoPipe,IconComponent],providers:[...provideIcons(lucidePanelLeft,lucideHouse,lucideLibrary,lucideArrowLeftRight,lucideSettings,lucideChevronRight)],template:`
+@Component({selector:'sb-shell-layout',standalone:true,imports:[RouterOutlet,RouterLink,RouterLinkActive,TranslocoPipe,IconComponent],providers:[...provideIcons(lucidePanelLeft,lucideHouse,lucideLibrary,lucideArrowDownUp,lucideSettings,lucideChevronRight)],template:`
 <div class="h-dvh overflow-hidden bg-[var(--sb-bg)] text-[var(--sb-text)]"><header class="flex h-14 items-center border-b border-[var(--sb-border)] bg-[var(--sb-surface)] px-3"><button class="mr-2 flex items-center justify-center rounded px-2 py-1 text-xl hover:bg-[var(--sb-gray-3)]" (click)="toggleSidebar()" title="Навигация"><sb-icon name="panelLeft" /></button><strong class="text-sm">{{'app.name'|transloco}}</strong><span class="ml-auto hidden text-xs text-[var(--sb-text-muted)] sm:inline">Smart Barn Platform</span></header>
 <div class="grid h-[calc(100dvh-56px)] transition-[grid-template-columns] duration-150" [style.grid-template-columns]="sidebarOpen()?'52px 260px minmax(0,1fr)':'52px 0 minmax(0,1fr)'">
 <aside class="relative z-20 border-r border-[var(--sb-border)] bg-[var(--sb-surface)]"><nav class="flex h-full w-[52px] flex-col items-center gap-1 py-2">
@@ -62,7 +62,7 @@ export class ShellLayoutComponent implements OnDestroy{
   readonly materials=signal<MaterialRecord[]>(loadMaterialCatalog());
   private touchTimer?:ReturnType<typeof setTimeout>;
   private readonly refreshMaterials=()=>this.materials.set(loadMaterialCatalog());
-  readonly spaces:ReadonlyArray<{id:Workspace;label:string;icon:string}>=[{id:'house',label:'Конструкция дома',icon:'house'},{id:'materials',label:'Справочник материалов',icon:'library'},{id:'exchange',label:'Обмен',icon:'arrowLeftRight'},{id:'settings',label:'Настройки',icon:'settings'}];
+  readonly spaces:ReadonlyArray<{id:Workspace;label:string;icon:string}>=[{id:'house',label:'Конструкция дома',icon:'house'},{id:'materials',label:'Справочник материалов',icon:'library'},{id:'exchange',label:'Обмен',icon:'arrowDownUp'},{id:'settings',label:'Настройки',icon:'settings'}];
 
   constructor(){if(typeof window!=='undefined')window.addEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);}
   ngOnDestroy():void{if(typeof window!=='undefined')window.removeEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);if(this.touchTimer)clearTimeout(this.touchTimer);}
