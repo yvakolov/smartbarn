@@ -1,15 +1,24 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import {
+  lucideArrowLeftRight,
+  lucideChevronRight,
+  lucideHouse,
+  lucideLibrary,
+  lucideMenu,
+  lucideSettings,
+} from '@smartbarn/icons';
+import { IconComponent, provideIcons } from '@smartbarn/ui-kit';
 import { MATERIAL_CATALOG_CHANGED_EVENT, MATERIAL_GROUPS, loadMaterialCatalog, type MaterialGroup, type MaterialRecord } from '../../features/materials/material-catalog';
 
 type Workspace='house'|'materials'|'exchange'|'settings';
 
-@Component({selector:'sb-shell-layout',standalone:true,imports:[RouterOutlet,RouterLink,RouterLinkActive,TranslocoPipe],template:`
-<div class="h-dvh overflow-hidden bg-[var(--sb-bg)] text-[var(--sb-text)]"><header class="flex h-14 items-center border-b border-[var(--sb-border)] bg-[var(--sb-surface)] px-3"><button class="mr-2 rounded px-2 py-1 hover:bg-[var(--sb-gray-3)]" (click)="toggleSidebar()" title="Навигация">☰</button><strong class="text-sm">{{'app.name'|transloco}}</strong><span class="ml-auto hidden text-xs text-[var(--sb-text-muted)] sm:inline">Smart Barn Platform</span></header>
+@Component({selector:'sb-shell-layout',standalone:true,imports:[RouterOutlet,RouterLink,RouterLinkActive,TranslocoPipe,IconComponent],providers:[...provideIcons(lucideMenu,lucideHouse,lucideLibrary,lucideArrowLeftRight,lucideSettings,lucideChevronRight)],template:`
+<div class="h-dvh overflow-hidden bg-[var(--sb-bg)] text-[var(--sb-text)]"><header class="flex h-14 items-center border-b border-[var(--sb-border)] bg-[var(--sb-surface)] px-3"><button class="mr-2 flex items-center justify-center rounded px-2 py-1 text-xl hover:bg-[var(--sb-gray-3)]" (click)="toggleSidebar()" title="Навигация"><sb-icon name="menu" /></button><strong class="text-sm">{{'app.name'|transloco}}</strong><span class="ml-auto hidden text-xs text-[var(--sb-text-muted)] sm:inline">Smart Barn Platform</span></header>
 <div class="grid h-[calc(100dvh-56px)] transition-[grid-template-columns] duration-150" [style.grid-template-columns]="sidebarOpen()?'52px 260px minmax(0,1fr)':'52px 0 minmax(0,1fr)'">
 <aside class="relative z-20 border-r border-[var(--sb-border)] bg-[var(--sb-surface)]"><nav class="flex h-full w-[52px] flex-col items-center gap-1 py-2">
-@for(space of spaces;track space.id){<button class="group relative flex h-11 w-11 items-center justify-center rounded-lg" [class.mt-auto]="space.id==='settings'" [class.bg-[var(--sb-accent-soft)]]="activeSpace()===space.id" (click)="selectSpace(space.id)" [attr.aria-label]="space.label"><span class="text-xl">{{space.icon}}</span><span class="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded bg-[var(--sb-text)] px-2 py-1 text-xs text-[var(--sb-bg)] shadow-lg group-hover:block">{{space.label}}</span></button>}
+@for(space of spaces;track space.id){<button class="group relative flex h-11 w-11 items-center justify-center rounded-lg text-xl" [class.mt-auto]="space.id==='settings'" [class.bg-[var(--sb-accent-soft)]]="activeSpace()===space.id" (click)="selectSpace(space.id)" [attr.aria-label]="space.label"><sb-icon [name]="space.icon" /><span class="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded bg-[var(--sb-text)] px-2 py-1 text-xs text-[var(--sb-bg)] shadow-lg group-hover:block">{{space.label}}</span></button>}
 </nav>@if(touchLabel()){<div class="pointer-events-none absolute left-[58px] top-3 z-50 whitespace-nowrap rounded bg-[var(--sb-text)] px-2 py-1 text-xs text-[var(--sb-bg)] shadow-lg md:hidden">{{touchLabel()}}</div>}</aside>
 <aside class="overflow-hidden border-r border-[var(--sb-border)] bg-[var(--sb-surface)]"><nav class="flex h-full w-[260px] flex-col gap-1 overflow-auto p-3 text-sm"><div class="mb-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]">{{spaceTitle()}}</div>
 @switch(activeSpace()){
@@ -24,7 +33,7 @@ type Workspace='house'|'materials'|'exchange'|'settings';
       @for(group of materialGroups;track group.id){
         <details class="group/tree rounded" open>
           <summary class="cursor-pointer list-none rounded px-3 py-2 text-[var(--sb-text-muted)] hover:bg-[var(--sb-gray-3)]">
-            <span class="mr-1 inline-block w-4 text-center transition-transform group-open/tree:rotate-90">›</span>{{group.name}}
+            <sb-icon name="chevronRight" class="mr-1 transition-transform group-open/tree:rotate-90" />{{group.name}}
           </summary>
           <div class="ml-5 border-l border-[var(--sb-border)] pl-2">
             @for(material of materialsForGroup(group.id);track material.id){
@@ -53,7 +62,7 @@ export class ShellLayoutComponent implements OnDestroy{
   readonly materials=signal<MaterialRecord[]>(loadMaterialCatalog());
   private touchTimer?:ReturnType<typeof setTimeout>;
   private readonly refreshMaterials=()=>this.materials.set(loadMaterialCatalog());
-  readonly spaces:ReadonlyArray<{id:Workspace;label:string;icon:string}>=[{id:'house',label:'Конструкция дома',icon:'⌂'},{id:'materials',label:'Справочник материалов',icon:'▱'},{id:'exchange',label:'Обмен',icon:'⇄'},{id:'settings',label:'Настройки',icon:'⚙'}];
+  readonly spaces:ReadonlyArray<{id:Workspace;label:string;icon:string}>=[{id:'house',label:'Конструкция дома',icon:'house'},{id:'materials',label:'Справочник материалов',icon:'library'},{id:'exchange',label:'Обмен',icon:'arrowLeftRight'},{id:'settings',label:'Настройки',icon:'settings'}];
 
   constructor(){if(typeof window!=='undefined')window.addEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);}
   ngOnDestroy():void{if(typeof window!=='undefined')window.removeEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);if(this.touchTimer)clearTimeout(this.touchTimer);}
