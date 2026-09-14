@@ -27,14 +27,12 @@ type StructureMode = 'foundation' | 'storeys';
         @if (mode === 'foundation') {
           <h1 class="text-xl font-semibold">{{ 'structure.foundation' | transloco }}</h1>
           <p class="mt-1 text-sm text-[var(--sb-text-muted)]">{{ 'structure.foundationHint' | transloco }}</p>
-          <div class="mt-6 grid gap-4 rounded-lg border border-[var(--sb-border)] bg-[var(--sb-surface)] p-5 sm:grid-cols-2">
-            <label class="text-sm">{{ 'structure.baseElevation' | transloco }}
-              <input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="structure().foundation.baseElevationMm" (change)="updateFoundation('baseElevationMm',$event)" />
-            </label>
+          <div class="mt-6 grid gap-4 rounded-lg border border-[var(--sb-border)] bg-[var(--sb-surface)] p-5">
             <label class="text-sm">{{ 'structure.foundationHeight' | transloco }}
-              <input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="structure().foundation.heightMm" (change)="updateFoundation('heightMm',$event)" />
+              <input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="structure().foundation.heightMm" (change)="updateFoundationHeight($event)" />
             </label>
-            <div class="sm:col-span-2 grid gap-2 text-sm text-[var(--sb-text-muted)]">
+            <div class="grid gap-2 text-sm text-[var(--sb-text-muted)]">
+              <div>{{ 'structure.baseElevation' | transloco }}: <strong class="text-[var(--sb-text)]">{{ structure().foundation.baseElevationMm }} {{ 'floorField.mm' | transloco }}</strong></div>
               <div>{{ 'structure.foundationTop' | transloco }}: <strong class="text-[var(--sb-text)]">{{ foundationTop() }} {{ 'floorField.mm' | transloco }}</strong></div>
               <div>{{ 'structure.groundFloorHeight' | transloco }}: <strong class="text-[var(--sb-text)]">{{ underWallsThicknessMm() }} {{ 'floorField.mm' | transloco }}</strong></div>
             </div>
@@ -79,10 +77,10 @@ export class BuildingStructurePage implements OnDestroy {
   roofBase(): number { return roofBaseElevationMm(this.structure()); }
   storeyTop(id: string): number { const storey = this.structure().storeys.find((item) => item.id === id); return storey ? storeyTopElevationMm(storey) : 0; }
 
-  updateFoundation(key: 'baseElevationMm' | 'heightMm', event: Event): void {
-    const value = this.readNumber(event, this.structure().foundation[key]);
-    const foundation = { ...this.structure().foundation, [key]: value };
-    this.commit(rebuildStoreyElevations({ ...this.structure(), foundation }));
+  updateFoundationHeight(event: Event): void {
+    const current=this.structure();
+    const heightMm=Math.max(100,this.readNumber(event,current.foundation.heightMm));
+    this.commit(rebuildStoreyElevations({ ...current, foundation:{...current.foundation,heightMm} }));
   }
 
   addStorey(): void {
