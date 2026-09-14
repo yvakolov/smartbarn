@@ -8,11 +8,11 @@ export interface FoundationModel {
 export interface StoreyModel {
   readonly id: string;
   readonly name: string;
-  /** Bottom of the floor layers that are under walls. */
+  /** Bottom of this storey's floor layers that are under walls. */
   readonly baseElevationMm: number;
-  /** Clear wall height from the floor datum (top of under-wall layers) to the wall top. */
+  /** Clear wall height from this storey's floor datum to the wall top. */
   readonly clearanceMm: number;
-  /** Under-wall floor thickness + clearance. */
+  /** This storey's under-wall floor thickness + clearance. */
   readonly heightMm: number;
 }
 
@@ -38,8 +38,8 @@ const numberInRange = (value: unknown, fallback: number, min: number, max: numbe
   return Number.isFinite(numeric) ? Math.min(max, Math.max(min, Math.round(numeric))) : fallback;
 };
 
-export function storeyFloorDatumElevationMm(storey:StoreyModel,underWallsThicknessMm=loadUnderWallsThicknessMm()):number{
-  return storey.baseElevationMm+underWallsThicknessMm;
+export function storeyFloorDatumElevationMm(storey:StoreyModel):number{
+  return storey.baseElevationMm+loadUnderWallsThicknessMm(storey.id);
 }
 
 export function storeyTopElevationMm(storey: StoreyModel): number {
@@ -55,21 +55,19 @@ export function normalizeBuildingStructure(value: unknown): BuildingStructureMod
   if (!value || typeof value !== 'object') return rebuildStoreyElevations(DEFAULT_BUILDING_STRUCTURE);
   const source = value as Partial<BuildingStructureModel>;
   const foundationSource = source.foundation ?? DEFAULT_BUILDING_STRUCTURE.foundation;
-  const underWallsThicknessMm=loadUnderWallsThicknessMm();
   const foundationHeightMm=numberInRange(foundationSource.heightMm, DEFAULT_FOUNDATION_HEIGHT_MM, 100, 5000);
-  const foundation: FoundationModel = {
-    heightMm: foundationHeightMm,
-    baseElevationMm: -underWallsThicknessMm-foundationHeightMm,
-  };
   const rawStoreys = Array.isArray(source.storeys) ? source.storeys : DEFAULT_BUILDING_STRUCTURE.storeys;
-  let nextBase = -underWallsThicknessMm;
+  let nextBase = 0;
   const storeys = rawStoreys.map((raw, index) => {
     const sourceStorey = raw as Partial<StoreyModel>;
+    const id=typeof sourceStorey.id === 'string' && sourceStorey.id ? sourceStorey.id : `storey-${index + 1}`;
+    const underWallsThicknessMm=loadUnderWallsThicknessMm(id);
+    if(index===0)nextBase=-underWallsThicknessMm;
     const legacyHeightMm=numberInRange(sourceStorey.heightMm, DEFAULT_CLEARANCE_MM+underWallsThicknessMm, 1800, 10000);
     const clearanceMm=numberInRange(sourceStorey.clearanceMm, Math.max(1800,legacyHeightMm-underWallsThicknessMm), 1800, 10000);
     const heightMm=clearanceMm+underWallsThicknessMm;
     const storey: StoreyModel = {
-      id: typeof sourceStorey.id === 'string' && sourceStorey.id ? sourceStorey.id : `storey-${index + 1}`,
+      id,
       name: typeof sourceStorey.name === 'string' && sourceStorey.name.trim() ? sourceStorey.name.trim() : `Этаж ${index + 1}`,
       baseElevationMm:nextBase,
       clearanceMm,
@@ -78,6 +76,8 @@ export function normalizeBuildingStructure(value: unknown): BuildingStructureMod
     nextBase = storeyTopElevationMm(storey);
     return storey;
   });
+  const firstThickness=storeys.length?loadUnderWallsThicknessMm(storeys[0].id):0;
+  const foundation: FoundationModel = {heightMm:foundationHeightMm,baseElevationMm:-firstThickness-foundationHeightMm};
   return { version: 1, foundation, storeys };
 }
 
@@ -98,18 +98,14 @@ export function saveBuildingStructure(structure: BuildingStructureModel): void {
 }
 
 export function rebuildStoreyElevations(structure: BuildingStructureModel): BuildingStructureModel {
-  const underWallsThicknessMm=loadUnderWallsThicknessMm();
-  const foundation={
-    ...structure.foundation,
-    baseElevationMm:-underWallsThicknessMm-structure.foundation.heightMm,
-  };
-  // The first-storey datum 0.000 is the top of the highest layer marked "under walls".
-  // Therefore the bottom of the first storey is exactly one under-wall assembly thickness below zero.
-  let baseElevationMm = -underWallsThicknessMm;
+  const firstStorey=structure.storeys[0];
+  const firstThickness=firstStorey?loadUnderWallsThicknessMm(firstStorey.id):0;
+  const foundation={...structure.foundation,baseElevationMm:-firstThickness-structure.foundation.heightMm};
+  let baseElevationMm = -firstThickness;
   const storeys = structure.storeys.map((storey) => {
+    const underWallsThicknessMm=loadUnderWallsThicknessMm(storey.id);
     const heightMm=storey.clearanceMm+underWallsThicknessMm;
     const next = { ...storey, baseElevationMm, heightMm };
-    // For upper storeys, the previous wall top is the lower boundary of the next storey.
     baseElevationMm = storeyTopElevationMm(next);
     return next;
   });
