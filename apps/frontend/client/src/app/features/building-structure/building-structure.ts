@@ -1,3 +1,5 @@
+import { loadUnderWallsThicknessMm } from '../floor-field/floor-field.store';
+
 export interface FoundationModel {
   readonly baseElevationMm: number;
   readonly heightMm: number;
@@ -7,6 +9,7 @@ export interface StoreyModel {
   readonly id: string;
   readonly name: string;
   readonly baseElevationMm: number;
+  readonly clearanceMm: number;
   readonly heightMm: number;
 }
 
@@ -18,11 +21,12 @@ export interface BuildingStructureModel {
 
 export const BUILDING_STRUCTURE_CHANGED_EVENT = 'smartbarn:building-structure-changed';
 const STORAGE_KEY = 'smartbarn.building-structure.v1';
+const DEFAULT_CLEARANCE_MM=2800;
 
 export const DEFAULT_BUILDING_STRUCTURE: BuildingStructureModel = {
   version: 1,
   foundation: { baseElevationMm: -600, heightMm: 600 },
-  storeys: [{ id: 'storey-1', name: 'Этаж 1', baseElevationMm: 0, heightMm: 3000 }],
+  storeys: [{ id: 'storey-1', name: 'Этаж 1', baseElevationMm: 0, clearanceMm: DEFAULT_CLEARANCE_MM, heightMm: DEFAULT_CLEARANCE_MM + 224 }],
 };
 
 const numberInRange = (value: unknown, fallback: number, min: number, max: number): number => {
@@ -40,23 +44,27 @@ export function roofBaseElevationMm(structure: BuildingStructureModel): number {
 }
 
 export function normalizeBuildingStructure(value: unknown): BuildingStructureModel {
-  if (!value || typeof value !== 'object') return DEFAULT_BUILDING_STRUCTURE;
+  if (!value || typeof value !== 'object') return rebuildStoreyElevations(DEFAULT_BUILDING_STRUCTURE);
   const source = value as Partial<BuildingStructureModel>;
   const foundationSource = source.foundation ?? DEFAULT_BUILDING_STRUCTURE.foundation;
   const foundation: FoundationModel = {
     baseElevationMm: numberInRange(foundationSource.baseElevationMm, -600, -10000, 10000),
     heightMm: numberInRange(foundationSource.heightMm, 600, 100, 5000),
   };
+  const underWallsThicknessMm=loadUnderWallsThicknessMm();
   const rawStoreys = Array.isArray(source.storeys) ? source.storeys : DEFAULT_BUILDING_STRUCTURE.storeys;
   let nextBase = foundation.baseElevationMm + foundation.heightMm;
   const storeys = rawStoreys.map((raw, index) => {
     const sourceStorey = raw as Partial<StoreyModel>;
     const baseElevationMm = numberInRange(sourceStorey.baseElevationMm, nextBase, -10000, 50000);
-    const heightMm = numberInRange(sourceStorey.heightMm, 3000, 1800, 10000);
+    const legacyHeightMm=numberInRange(sourceStorey.heightMm, DEFAULT_CLEARANCE_MM+underWallsThicknessMm, 1800, 10000);
+    const clearanceMm=numberInRange(sourceStorey.clearanceMm, Math.max(1800,legacyHeightMm-underWallsThicknessMm), 1800, 10000);
+    const heightMm=clearanceMm+underWallsThicknessMm;
     const storey: StoreyModel = {
       id: typeof sourceStorey.id === 'string' && sourceStorey.id ? sourceStorey.id : `storey-${index + 1}`,
       name: typeof sourceStorey.name === 'string' && sourceStorey.name.trim() ? sourceStorey.name.trim() : `Этаж ${index + 1}`,
       baseElevationMm,
+      clearanceMm,
       heightMm,
     };
     nextBase = storeyTopElevationMm(storey);
@@ -66,12 +74,12 @@ export function normalizeBuildingStructure(value: unknown): BuildingStructureMod
 }
 
 export function loadBuildingStructure(): BuildingStructureModel {
-  if (typeof window === 'undefined') return DEFAULT_BUILDING_STRUCTURE;
+  if (typeof window === 'undefined') return rebuildStoreyElevations(DEFAULT_BUILDING_STRUCTURE);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? normalizeBuildingStructure(JSON.parse(raw)) : DEFAULT_BUILDING_STRUCTURE;
+    return raw ? normalizeBuildingStructure(JSON.parse(raw)) : rebuildStoreyElevations(DEFAULT_BUILDING_STRUCTURE);
   } catch {
-    return DEFAULT_BUILDING_STRUCTURE;
+    return rebuildStoreyElevations(DEFAULT_BUILDING_STRUCTURE);
   }
 }
 
@@ -82,9 +90,11 @@ export function saveBuildingStructure(structure: BuildingStructureModel): void {
 }
 
 export function rebuildStoreyElevations(structure: BuildingStructureModel): BuildingStructureModel {
+  const underWallsThicknessMm=loadUnderWallsThicknessMm();
   let baseElevationMm = structure.foundation.baseElevationMm + structure.foundation.heightMm;
   const storeys = structure.storeys.map((storey) => {
-    const next = { ...storey, baseElevationMm };
+    const heightMm=storey.clearanceMm+underWallsThicknessMm;
+    const next = { ...storey, baseElevationMm, heightMm };
     baseElevationMm = storeyTopElevationMm(next);
     return next;
   });
