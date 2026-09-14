@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, output, signal } from '@angular/core';
+import type { FormValueControl } from '@angular/forms/signals';
 
 export interface SearchComboboxOption {
   readonly value: string;
@@ -16,13 +17,14 @@ interface SearchComboboxGroup {
 /**
  * SmartBarn reusable searchable combobox primitive.
  *
- * Public API is signal-first (`input()` / `model()`) so the component can be
- * composed with Angular signal forms and application-specific wrappers.
- * Domain concepts do not belong here: callers provide flat options and an
- * optional non-selectable group label.
+ * Public API is signal-first (`input()` / `model()` / `output()`) and the
+ * component implements Angular 22 `FormValueControl`, so it can be bound by
+ * `[formField]` without a ControlValueAccessor.
  *
- * The interaction model follows Spartan combobox conventions: searchable
- * input, grouped listbox, non-selectable group headings and single selection.
+ * Domain concepts do not belong here: callers provide flat options and an
+ * optional non-selectable group label. The interaction model follows Spartan
+ * combobox conventions: searchable input, grouped listbox, non-selectable
+ * group headings and single selection.
  */
 @Component({
   selector: 'sb-search-combobox',
@@ -61,7 +63,7 @@ interface SearchComboboxGroup {
 
     @if (open() && !disabled()) {
       <div
-        class="absolute z-50 mt-1 max-h-72 w-full min-w-[260px] overflow-auto rounded-md border border-[var(--sb-border)] bg-[var(--sb-surface)] p-1 shadow-xl"
+        class="absolute z-50 mt-1 max-h-72 w-full min-w-[280px] overflow-auto rounded-md border border-[var(--sb-border)] bg-[var(--sb-surface)] p-1 shadow-xl"
         role="listbox"
       >
         @if (groups().length === 0) {
@@ -69,7 +71,7 @@ interface SearchComboboxGroup {
         }
         @for (group of groups(); track group.name) {
           @if (group.name) {
-            <div class="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]">
+            <div class="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]" role="presentation">
               {{ group.name }}
             </div>
           }
@@ -92,12 +94,13 @@ interface SearchComboboxGroup {
     }
   `,
 })
-export class SearchComboboxComponent {
+export class SearchComboboxComponent implements FormValueControl<string | null> {
   readonly options = input<readonly SearchComboboxOption[]>([]);
   readonly placeholder = input('Выберите значение');
   readonly emptyText = input('Ничего не найдено');
   readonly disabled = input(false);
   readonly value = model<string | null>(null);
+  readonly touch = output<void>();
 
   readonly open = signal(false);
   readonly query = signal('');
@@ -116,7 +119,10 @@ export class SearchComboboxComponent {
     const map = new Map<string, SearchComboboxOption[]>();
     for (const option of filtered) {
       const group = option.group ?? '';
-      if (!map.has(group)) { map.set(group, []); names.push(group); }
+      if (!map.has(group)) {
+        map.set(group, []);
+        names.push(group);
+      }
       map.get(group)!.push(option);
     }
     return names.map((name) => ({ name, options: map.get(name)! }));
@@ -132,6 +138,7 @@ export class SearchComboboxComponent {
     this.value.set(option.value);
     this.query.set('');
     this.open.set(false);
+    this.touch.emit();
   }
 
   toggle(): void {
@@ -145,6 +152,19 @@ export class SearchComboboxComponent {
   }
 
   onBlur(): void {
-    queueMicrotask(() => this.close());
+    queueMicrotask(() => {
+      this.close();
+      this.touch.emit();
+    });
+  }
+
+  focus(): void {
+    this.open.set(true);
+  }
+
+  reset(): void {
+    this.value.set(null);
+    this.query.set('');
+    this.open.set(false);
   }
 }
