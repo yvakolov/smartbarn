@@ -32,12 +32,15 @@ export const DEFAULT_MATERIALS: readonly MaterialRecord[] = [
   { id: 'cement-screed', group: 'concrete', name: 'Цементная стяжка', defaultThicknessMm: 60, densityKgM3: 2000, thermalConductivityWMK: 1.4, color: '#aaa9a5' },
 ];
 
+export const MATERIAL_CATALOG_CHANGED_EVENT = 'smartbarn:material-catalog-changed';
 const STORAGE_KEY = 'smartbarn.material-catalog.v1';
 export function loadMaterialCatalog(): MaterialRecord[] {
   if (typeof window === 'undefined') return [...DEFAULT_MATERIALS];
   try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return [...DEFAULT_MATERIALS]; const data = JSON.parse(raw); return Array.isArray(data?.materials) ? data.materials : [...DEFAULT_MATERIALS]; } catch { return [...DEFAULT_MATERIALS]; }
 }
 export function saveMaterialCatalog(materials: readonly MaterialRecord[]): void {
-  if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, materials }));
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, materials }));
+  window.dispatchEvent(new CustomEvent(MATERIAL_CATALOG_CHANGED_EVENT));
 }
 export function materialById(id: string | undefined): MaterialRecord | undefined { return loadMaterialCatalog().find((item) => item.id === id); }
