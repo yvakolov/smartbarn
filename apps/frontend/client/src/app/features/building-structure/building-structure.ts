@@ -25,10 +25,11 @@ export interface BuildingStructureModel {
 export const BUILDING_STRUCTURE_CHANGED_EVENT = 'smartbarn:building-structure-changed';
 const STORAGE_KEY = 'smartbarn.building-structure.v1';
 const DEFAULT_CLEARANCE_MM=2800;
+const DEFAULT_FOUNDATION_HEIGHT_MM=600;
 
 export const DEFAULT_BUILDING_STRUCTURE: BuildingStructureModel = {
   version: 1,
-  foundation: { baseElevationMm: -600, heightMm: 600 },
+  foundation: { baseElevationMm: -824, heightMm: DEFAULT_FOUNDATION_HEIGHT_MM },
   storeys: [{ id: 'storey-1', name: 'Этаж 1', baseElevationMm: -224, clearanceMm: DEFAULT_CLEARANCE_MM, heightMm: DEFAULT_CLEARANCE_MM + 224 }],
 };
 
@@ -54,11 +55,12 @@ export function normalizeBuildingStructure(value: unknown): BuildingStructureMod
   if (!value || typeof value !== 'object') return rebuildStoreyElevations(DEFAULT_BUILDING_STRUCTURE);
   const source = value as Partial<BuildingStructureModel>;
   const foundationSource = source.foundation ?? DEFAULT_BUILDING_STRUCTURE.foundation;
-  const foundation: FoundationModel = {
-    baseElevationMm: numberInRange(foundationSource.baseElevationMm, -600, -10000, 10000),
-    heightMm: numberInRange(foundationSource.heightMm, 600, 100, 5000),
-  };
   const underWallsThicknessMm=loadUnderWallsThicknessMm();
+  const foundationHeightMm=numberInRange(foundationSource.heightMm, DEFAULT_FOUNDATION_HEIGHT_MM, 100, 5000);
+  const foundation: FoundationModel = {
+    heightMm: foundationHeightMm,
+    baseElevationMm: -underWallsThicknessMm-foundationHeightMm,
+  };
   const rawStoreys = Array.isArray(source.storeys) ? source.storeys : DEFAULT_BUILDING_STRUCTURE.storeys;
   let nextBase = -underWallsThicknessMm;
   const storeys = rawStoreys.map((raw, index) => {
@@ -97,6 +99,10 @@ export function saveBuildingStructure(structure: BuildingStructureModel): void {
 
 export function rebuildStoreyElevations(structure: BuildingStructureModel): BuildingStructureModel {
   const underWallsThicknessMm=loadUnderWallsThicknessMm();
+  const foundation={
+    ...structure.foundation,
+    baseElevationMm:-underWallsThicknessMm-structure.foundation.heightMm,
+  };
   // The first-storey datum 0.000 is the top of the highest layer marked "under walls".
   // Therefore the bottom of the first storey is exactly one under-wall assembly thickness below zero.
   let baseElevationMm = -underWallsThicknessMm;
@@ -107,5 +113,5 @@ export function rebuildStoreyElevations(structure: BuildingStructureModel): Buil
     baseElevationMm = storeyTopElevationMm(next);
     return next;
   });
-  return { ...structure, storeys };
+  return { ...structure, foundation, storeys };
 }
