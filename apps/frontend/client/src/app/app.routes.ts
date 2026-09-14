@@ -12,10 +12,23 @@ export const appRoutes: Routes = [
           import('./features/floor-field/floor-field.page').then((m) => m.FloorFieldPage),
       },
       {
-        path: 'import-export',
+        path: 'materials',
+        loadComponent: () =>
+          import('./features/materials/materials.page').then((m) => m.MaterialsPage),
+      },
+      {
+        path: 'exchange/import',
+        data: { transportTab: 'import' },
         loadComponent: () =>
           import('./features/import-export/import-export.page').then((m) => m.ImportExportPage),
       },
+      {
+        path: 'exchange/export',
+        data: { transportTab: 'export' },
+        loadComponent: () =>
+          import('./features/import-export/import-export.page').then((m) => m.ImportExportPage),
+      },
+      { path: 'import-export', pathMatch: 'full', redirectTo: 'exchange/import' },
       {
         path: 'settings',
         loadComponent: () =>
