@@ -24,6 +24,11 @@ export const appRoutes: Routes = [
           import('./features/floor-field/floor-field.page').then((m) => m.FloorFieldPage),
       },
       {
+        path: 'walls',
+        loadComponent: () =>
+          import('./features/walls/walls.page').then((m) => m.WallsPage),
+      },
+      {
         path: 'materials',
         loadComponent: () =>
           import('./features/materials/materials.page').then((m) => m.MaterialsPage),
