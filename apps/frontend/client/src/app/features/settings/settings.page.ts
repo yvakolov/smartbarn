@@ -24,8 +24,8 @@ import { ThemeService, type SmartBarnTheme } from '@smartbarn/ui-ds';
       <div class="rounded-[var(--sb-radius-4)] border border-[var(--sb-color-border)] bg-[var(--sb-color-panel)] p-5">
         <h2 class="font-semibold">{{ 'settings.language' | transloco }}</h2>
         <div class="mt-4 flex gap-2">
-          <button class="rounded-[var(--sb-radius-2)] border border-[var(--sb-color-border)] px-3 py-2" (click)="setLanguage('ru')">Русский</button>
-          <button class="rounded-[var(--sb-radius-2)] border border-[var(--sb-color-border)] px-3 py-2" (click)="setLanguage('en')">English</button>
+          <button class="rounded-[var(--sb-radius-2)] border border-[var(--sb-color-border)] px-3 py-2" (click)="setLanguage('ru')">{{ 'settings.languageRu' | transloco }}</button>
+          <button class="rounded-[var(--sb-radius-2)] border border-[var(--sb-color-border)] px-3 py-2" (click)="setLanguage('en')">{{ 'settings.languageEn' | transloco }}</button>
         </div>
       </div>
     </section>
