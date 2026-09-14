@@ -1,53 +1,25 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { DEFAULT_MATERIALS, MATERIAL_GROUPS, loadMaterialCatalog, saveMaterialCatalog, type MaterialGroup, type MaterialRecord } from './material-catalog';
 
-type MaterialCategory = {
-  readonly name: string;
-  readonly children?: readonly MaterialCategory[];
-};
-
-@Component({
-  selector: 'smartbarn-materials-page',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <section class="h-full overflow-auto bg-[var(--sb-bg)] p-4 text-[var(--sb-text)] md:p-6">
-      <div class="mx-auto max-w-4xl">
-        <h1 class="text-xl font-semibold">Справочник материалов</h1>
-        <p class="mt-1 text-sm text-[var(--sb-text-muted)]">Базовая структура каталога. Карточки материалов и ссылки из конструкций добавим следующим этапом.</p>
-
-        <div class="mt-6 rounded-lg border border-[var(--sb-border)] bg-[var(--sb-surface)] p-3">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]">Материалы</div>
-          <div class="mt-1 space-y-1">
-            @for (category of categories; track category.name) {
-              <details class="group rounded-md" open>
-                <summary class="cursor-pointer list-none rounded px-3 py-2 text-sm hover:bg-[var(--sb-gray-3)]">
-                  <span class="mr-2 inline-block w-4 text-center text-[var(--sb-text-muted)] group-open:rotate-90">›</span>{{ category.name }}
-                </summary>
-                @if (category.children?.length) {
-                  <div class="ml-6 border-l border-[var(--sb-border)] pl-2">
-                    @for (child of category.children; track child.name) {
-                      <div class="rounded px-3 py-2 text-sm text-[var(--sb-text-muted)]">{{ child.name }}</div>
-                    }
-                  </div>
-                }
-              </details>
-            }
-          </div>
-        </div>
-      </div>
-    </section>
-  `,
-})
-export class MaterialsPage {
-  readonly categories: readonly MaterialCategory[] = [
-    { name: 'Древесина' },
-    { name: 'Листовые материалы', children: [{ name: 'OSB' }, { name: 'Фанера' }, { name: 'ГКЛ / ГВЛ' }] },
-    { name: 'Теплоизоляция' },
-    { name: 'Бетон / растворы' },
-    { name: 'Металл' },
-    { name: 'Мембраны / плёнки' },
-    { name: 'Отделочные материалы' },
-    { name: 'Крепёж' },
-    { name: 'Прочее' },
-  ];
+@Component({selector:'smartbarn-materials-page',standalone:true,changeDetection:ChangeDetectionStrategy.OnPush,template:`
+<section class="h-full overflow-auto bg-[var(--sb-bg)] p-4 text-[var(--sb-text)] md:p-6"><div class="mx-auto max-w-5xl">
+<div class="flex items-center justify-between gap-3"><div><h1 class="text-xl font-semibold">Справочник материалов</h1><p class="mt-1 text-sm text-[var(--sb-text-muted)]">Материалы — самостоятельные сущности с физическими и техническими характеристиками.</p></div><button class="rounded bg-[var(--sb-accent)] px-3 py-2 text-sm text-white" (click)="startCreate()">＋ Материал</button></div>
+<div class="mt-6 grid gap-4 md:grid-cols-[260px_minmax(0,1fr)]"><aside class="rounded-lg border border-[var(--sb-border)] bg-[var(--sb-surface)] p-3"><div class="px-3 py-2 text-xs font-semibold uppercase text-[var(--sb-text-muted)]">Группы</div>@for(group of groups;track group.id){<button class="block w-full rounded px-3 py-2 text-left text-sm" [class.bg-[var(--sb-accent-soft)]]="activeGroup()===group.id" (click)="activeGroup.set(group.id)">{{group.name}}</button>}</aside>
+<main class="space-y-3">@for(material of filtered();track material.id){<article class="rounded-lg border border-[var(--sb-border)] bg-[var(--sb-surface)] p-4" (click)="edit(material)"><div class="flex items-center gap-3"><span class="h-8 w-8 rounded border border-[var(--sb-border)]" [style.background]="material.color"></span><div class="min-w-0"><strong class="block truncate">{{material.name}}</strong><span class="text-xs text-[var(--sb-text-muted)]">{{material.manufacturer || 'Без производителя'}} · {{material.defaultThicknessMm || '—'}} мм</span></div></div></article>}@if(!filtered().length){<p class="p-4 text-sm text-[var(--sb-text-muted)]">В этой группе пока нет материалов.</p>}</main></div>
+@if(editor()){<div class="mt-6 rounded-lg border border-[var(--sb-border)] bg-[var(--sb-surface)] p-5"><h2 class="font-semibold">{{editingId()?'Карточка материала':'Новый материал'}}</h2><div class="mt-4 grid gap-3 sm:grid-cols-2">
+<label class="text-sm">Название<input class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.name" (input)="field('name',$event)"/></label><label class="text-sm">Группа<select class="mt-1 w-full rounded border border-[var(--sb-border)] bg-[var(--sb-surface)] p-2" [value]="editor()!.group" (change)="field('group',$event)">@for(group of groups;track group.id){<option [value]="group.id">{{group.name}}</option>}</select></label>
+<label class="text-sm">Производитель<input class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.manufacturer||''" (input)="field('manufacturer',$event)"/></label><label class="text-sm">Артикул<input class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.productCode||''" (input)="field('productCode',$event)"/></label>
+<label class="text-sm">Толщина по умолчанию, мм<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.defaultThicknessMm||''" (input)="numberField('defaultThicknessMm',$event)"/></label><label class="text-sm">Плотность, кг/м³<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.densityKgM3||''" (input)="numberField('densityKgM3',$event)"/></label>
+<label class="text-sm">Теплопроводность λ, Вт/(м·К)<input type="number" step="0.001" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.thermalConductivityWMK||''" (input)="numberField('thermalConductivityWMK',$event)"/></label><label class="text-sm">Удельная теплоёмкость, Дж/(кг·К)<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.specificHeatJKgK||''" (input)="numberField('specificHeatJKgK',$event)"/></label>
+<label class="text-sm">Коэффициент μ<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.vaporResistanceFactor||''" (input)="numberField('vaporResistanceFactor',$event)"/></label><label class="text-sm">Прочность на сжатие, МПа<input type="number" step="0.1" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="editor()!.compressiveStrengthMPa||''" (input)="numberField('compressiveStrengthMPa',$event)"/></label>
+</div><div class="mt-4 flex gap-2"><button class="rounded bg-[var(--sb-accent)] px-4 py-2 text-sm text-white" (click)="save()">Сохранить</button><button class="rounded border border-[var(--sb-border)] px-4 py-2 text-sm" (click)="editor.set(null)">Отмена</button></div></div>}
+</div></section>`})
+export class MaterialsPage{
+ readonly groups=MATERIAL_GROUPS;readonly materials=signal<MaterialRecord[]>(loadMaterialCatalog());readonly activeGroup=signal<MaterialGroup>('wood');readonly editor=signal<MaterialRecord|null>(null);readonly editingId=signal<string|null>(null);
+ filtered(){return this.materials().filter(m=>m.group===this.activeGroup());}
+ startCreate(){this.editingId.set(null);this.editor.set({id:'material-'+Date.now(),group:this.activeGroup(),name:'Новый материал',color:'#8ab4f8'});}
+ edit(m:MaterialRecord){this.editingId.set(m.id);this.editor.set({...m});}
+ field(key:'name'|'group'|'manufacturer'|'productCode',e:Event){const value=(e.target as HTMLInputElement).value;this.editor.update(m=>m?{...m,[key]:value}:m);}
+ numberField(key:'defaultThicknessMm'|'densityKgM3'|'thermalConductivityWMK'|'specificHeatJKgK'|'vaporResistanceFactor'|'compressiveStrengthMPa',e:Event){const raw=(e.target as HTMLInputElement).value;this.editor.update(m=>m?{...m,[key]:raw===''?undefined:Number(raw)}:m);}
+ save(){const m=this.editor();if(!m||!m.name.trim())return;const list=this.materials();const next=this.editingId()?list.map(x=>x.id===m.id?m:x):[...list,m];this.materials.set(next);saveMaterialCatalog(next);this.activeGroup.set(m.group);this.editor.set(null);}
 }
