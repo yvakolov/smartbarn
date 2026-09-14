@@ -25,6 +25,7 @@
       "@smartbarn/3d-engine": ["libs/3d-engine/src/index.ts"],
       "@smartbarn/bim-converter": ["libs/bim-converter/src/index.ts"],
       "@smartbarn/ui-ds": ["libs/ui/ds/src/index.ts"],
+      "@smartbarn/icons": ["libs/ui/icons/src/index.ts"],
       "@smartbarn/ui-kit": ["libs/ui/kit/src/index.ts"]
     }
   },
