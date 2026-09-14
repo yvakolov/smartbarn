@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, model, output, signal } from '@angular/core';
 import type { FormValueControl } from '@angular/forms/signals';
+import { lucideCheck, lucideChevronDown, lucideSearch, type IconCollection } from '@smartbarn/icons';
+import { IconComponent, provideIcons } from './icon.component';
 
 export interface SearchComboboxOption {
   readonly value: string;
@@ -22,6 +24,8 @@ interface SearchComboboxGroup {
 @Component({
   selector: 'sb-search-combobox',
   standalone: true,
+  imports: [IconComponent],
+  providers: provideIcons(lucideChevronDown, lucideSearch, lucideCheck),
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'relative block min-w-0' },
   template: `
@@ -37,7 +41,13 @@ interface SearchComboboxGroup {
         <span class="min-w-0 flex-1 truncate" [class.text-[var(--sb-text-muted)]]="!selected()">
           {{ selected()?.label || placeholder() }}
         </span>
-        <span class="shrink-0 text-xs text-[var(--sb-text-muted)]" aria-hidden="true">⌄</span>
+        <sb-icon
+          class="text-[var(--sb-text-muted)]"
+          name="chevronDown"
+          [collection]="iconCollection()"
+          [size]="iconSize()"
+          [strokeWidth]="iconStrokeWidth()"
+        />
       </button>
 
       @if (open() && !disabled()) {
@@ -46,7 +56,13 @@ interface SearchComboboxGroup {
         >
           <div class="border-b border-[var(--sb-border)] p-2">
             <div class="flex items-center gap-2 rounded-md border border-[var(--sb-border)] bg-[var(--sb-bg)] px-2 focus-within:border-[var(--sb-accent)] focus-within:ring-1 focus-within:ring-[var(--sb-accent)]">
-              <span class="shrink-0 text-[var(--sb-text-muted)]" aria-hidden="true">⌕</span>
+              <sb-icon
+                class="text-[var(--sb-text-muted)]"
+                name="search"
+                [collection]="iconCollection()"
+                [size]="iconSize()"
+                [strokeWidth]="iconStrokeWidth()"
+              />
               <input
                 #searchInput
                 type="search"
@@ -80,7 +96,14 @@ interface SearchComboboxGroup {
                   (click)="select(option)"
                 >
                   <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
-                  @if (value() === option.value) { <span class="shrink-0" aria-hidden="true">✓</span> }
+                  @if (value() === option.value) {
+                    <sb-icon
+                      name="check"
+                      [collection]="iconCollection()"
+                      [size]="iconSize()"
+                      [strokeWidth]="iconStrokeWidth()"
+                    />
+                  }
                 </button>
               }
             }
@@ -98,6 +121,12 @@ export class SearchComboboxComponent implements FormValueControl<string | null> 
   readonly disabled = input(false);
   readonly value = model<string | null>(null);
   readonly touch = output<void>();
+
+  /** Icon collection used by the combobox chrome. Lucide is the default SmartBarn collection. */
+  readonly iconCollection = input<IconCollection>('lucide');
+  /** Local icon scale. It is relative to text by default and can be overridden by consumers. */
+  readonly iconSize = input<string | number>('1.25em');
+  readonly iconStrokeWidth = input<number | null>(null);
 
   readonly open = signal(false);
   readonly query = signal('');
