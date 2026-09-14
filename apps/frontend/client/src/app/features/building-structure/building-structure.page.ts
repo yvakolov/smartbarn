@@ -34,8 +34,9 @@ type StructureMode = 'foundation' | 'storeys';
             <label class="text-sm">{{ 'structure.foundationHeight' | transloco }}
               <input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="structure().foundation.heightMm" (change)="updateFoundation('heightMm',$event)" />
             </label>
-            <div class="sm:col-span-2 text-sm text-[var(--sb-text-muted)]">
-              {{ 'structure.foundationTop' | transloco }}: <strong class="text-[var(--sb-text)]">{{ foundationTop() }} {{ 'floorField.mm' | transloco }}</strong>
+            <div class="sm:col-span-2 grid gap-2 text-sm text-[var(--sb-text-muted)]">
+              <div>{{ 'structure.foundationTop' | transloco }}: <strong class="text-[var(--sb-text)]">{{ foundationTop() }} {{ 'floorField.mm' | transloco }}</strong></div>
+              <div>{{ 'structure.groundFloorHeight' | transloco }}: <strong class="text-[var(--sb-text)]">{{ underWallsThicknessMm() }} {{ 'floorField.mm' | transloco }}</strong></div>
             </div>
           </div>
         } @else {
