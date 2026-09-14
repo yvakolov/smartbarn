@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 import { loadWallSettings, saveWallSettings } from './wall-settings';
 
 @Component({selector:'smartbarn-walls-page',standalone:true,imports:[TranslocoPipe],changeDetection:ChangeDetectionStrategy.OnPush,template:`
@@ -16,7 +18,12 @@ import { loadWallSettings, saveWallSettings } from './wall-settings';
     </label>
   </div>
 </section>`})
-export class WallsPage{
-  readonly externalWallThicknessMm=signal(loadWallSettings().externalWallThicknessMm);
-  updateThickness(event:Event){const n=Number((event.target as HTMLInputElement).value);if(!Number.isFinite(n))return;const value=Math.min(1000,Math.max(50,Math.round(n)));this.externalWallThicknessMm.set(value);saveWallSettings({version:1,externalWallThicknessMm:value});}
+export class WallsPage implements OnDestroy{
+  private readonly route=inject(ActivatedRoute);
+  private storeyId='storey-1';
+  private readonly routeSub:Subscription;
+  readonly externalWallThicknessMm=signal(174);
+  constructor(){this.routeSub=this.route.queryParamMap.subscribe(params=>{this.storeyId=params.get('storey')??'storey-1';this.externalWallThicknessMm.set(loadWallSettings(this.storeyId).externalWallThicknessMm);});}
+  ngOnDestroy():void{this.routeSub.unsubscribe();}
+  updateThickness(event:Event){const n=Number((event.target as HTMLInputElement).value);if(!Number.isFinite(n))return;const value=Math.min(1000,Math.max(50,Math.round(n)));this.externalWallThicknessMm.set(value);saveWallSettings({version:1,externalWallThicknessMm:value},this.storeyId);}
 }
