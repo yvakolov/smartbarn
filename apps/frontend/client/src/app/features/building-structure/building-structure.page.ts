@@ -54,12 +54,12 @@ type StructureMode = 'foundation' | 'storeys';
                   <label class="text-sm">{{ 'structure.baseElevation' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.baseElevationMm" readonly /></label>
                   <label class="text-sm">{{ 'structure.clearance' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.clearanceMm" (change)="updateStoreyClearance(storey.id,$event)" /></label>
                   <label class="text-sm">{{ 'structure.storeyHeight' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.heightMm" readonly /><small class="mt-1 block text-xs text-[var(--sb-text-muted)]">{{ 'structure.heightFormula' | transloco:{floor:underWallsThicknessMm()} }}</small></label>
-                  <label class="text-sm">{{ 'structure.topElevation' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storeyTop(storey.id)" readonly /></label>
+                  <label class="text-sm">{{ (i < structure().storeys.length - 1 ? 'structure.nextStoreyBase' : 'structure.mauerlatElevation') | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storeyTop(storey.id)" readonly /></label>
                 </div>
               </article>
             }
           </div>
-          <div class="mt-4 rounded-lg border border-dashed border-[var(--sb-border)] p-4 text-sm text-[var(--sb-text-muted)]">{{ 'structure.roofBase' | transloco }}: <strong class="text-[var(--sb-text)]">{{ roofBase() }} {{ 'floorField.mm' | transloco }}</strong></div>
+          <div class="mt-4 rounded-lg border border-dashed border-[var(--sb-border)] p-4 text-sm text-[var(--sb-text-muted)]">{{ 'structure.mauerlatElevation' | transloco }}: <strong class="text-[var(--sb-text)]">{{ roofBase() }} {{ 'floorField.mm' | transloco }}</strong></div>
         }
       </div>
     </section>
