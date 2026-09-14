@@ -4,6 +4,7 @@ export * from './lib/domain/model';
 export * from './lib/domain/floor-field';
 export * from './lib/application/commands';
 export * from './lib/application/commandDescriptors';
+export * from './lib/application/transport';
 
 export const FLOOR_FIELD_MODULE: SmartBarnModuleManifest = {
   id: 'floor-field',

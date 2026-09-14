@@ -12,6 +12,11 @@ export const appRoutes: Routes = [
           import('./features/floor-field/floor-field.page').then((m) => m.FloorFieldPage),
       },
       {
+        path: 'import-export',
+        loadComponent: () =>
+          import('./features/import-export/import-export.page').then((m) => m.ImportExportPage),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings.page').then((m) => m.SettingsPage),
