@@ -9,7 +9,6 @@ import {
   rebuildStoreyElevations,
   roofBaseElevationMm,
   saveBuildingStructure,
-  storeyTopElevationMm,
   type BuildingStructureModel,
 } from './building-structure';
 
@@ -49,11 +48,10 @@ type StructureMode = 'foundation' | 'storeys';
                   <strong>{{ 'structure.storey' | transloco }} {{ i + 1 }}</strong>
                   @if (structure().storeys.length > 1) {<button class="rounded p-1 text-[var(--sb-text-muted)] hover:bg-[var(--sb-gray-3)]" (click)="removeStorey(storey.id)" [attr.aria-label]="'structure.removeStorey'|transloco"><sb-icon name="x" /></button>}
                 </div>
-                <div class="mt-4 grid gap-3 sm:grid-cols-4">
+                <div class="mt-4 grid gap-3 sm:grid-cols-3">
                   <label class="text-sm">{{ 'structure.baseElevation' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.baseElevationMm" readonly /></label>
                   <label class="text-sm">{{ 'structure.clearance' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.clearanceMm" (change)="updateStoreyClearance(storey.id,$event)" /></label>
                   <label class="text-sm">{{ 'structure.storeyHeight' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.heightMm" readonly /><small class="mt-1 block text-xs text-[var(--sb-text-muted)]">{{ 'structure.heightFormula' | transloco:{floor:underWallsThicknessMm()} }}</small></label>
-                  <label class="text-sm">{{ (i < structure().storeys.length - 1 ? 'structure.nextStoreyBase' : 'structure.mauerlatElevation') | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storeyTop(storey.id)" readonly /></label>
                 </div>
               </article>
             }
@@ -75,7 +73,6 @@ export class BuildingStructurePage implements OnDestroy {
   ngOnDestroy():void{if(typeof window!=='undefined')window.removeEventListener(FLOOR_FIELD_CHANGED_EVENT,this.refreshFromFloor);}
   foundationTop(): number { const f = this.structure().foundation; return f.baseElevationMm + f.heightMm; }
   roofBase(): number { return roofBaseElevationMm(this.structure()); }
-  storeyTop(id: string): number { const storey = this.structure().storeys.find((item) => item.id === id); return storey ? storeyTopElevationMm(storey) : 0; }
 
   updateFoundationHeight(event: Event): void {
     const current=this.structure();
