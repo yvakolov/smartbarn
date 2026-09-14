@@ -6,7 +6,7 @@ import {
   lucideChevronRight,
   lucideHouse,
   lucideLibrary,
-  lucideMenu,
+  lucidePanelLeft,
   lucideSettings,
 } from '@smartbarn/icons';
 import { IconComponent, provideIcons } from '@smartbarn/ui-kit';
@@ -14,8 +14,8 @@ import { MATERIAL_CATALOG_CHANGED_EVENT, MATERIAL_GROUPS, loadMaterialCatalog, t
 
 type Workspace='house'|'materials'|'exchange'|'settings';
 
-@Component({selector:'sb-shell-layout',standalone:true,imports:[RouterOutlet,RouterLink,RouterLinkActive,TranslocoPipe,IconComponent],providers:[...provideIcons(lucideMenu,lucideHouse,lucideLibrary,lucideArrowLeftRight,lucideSettings,lucideChevronRight)],template:`
-<div class="h-dvh overflow-hidden bg-[var(--sb-bg)] text-[var(--sb-text)]"><header class="flex h-14 items-center border-b border-[var(--sb-border)] bg-[var(--sb-surface)] px-3"><button class="mr-2 flex items-center justify-center rounded px-2 py-1 text-xl hover:bg-[var(--sb-gray-3)]" (click)="toggleSidebar()" title="Навигация"><sb-icon name="menu" /></button><strong class="text-sm">{{'app.name'|transloco}}</strong><span class="ml-auto hidden text-xs text-[var(--sb-text-muted)] sm:inline">Smart Barn Platform</span></header>
+@Component({selector:'sb-shell-layout',standalone:true,imports:[RouterOutlet,RouterLink,RouterLinkActive,TranslocoPipe,IconComponent],providers:[...provideIcons(lucidePanelLeft,lucideHouse,lucideLibrary,lucideArrowLeftRight,lucideSettings,lucideChevronRight)],template:`
+<div class="h-dvh overflow-hidden bg-[var(--sb-bg)] text-[var(--sb-text)]"><header class="flex h-14 items-center border-b border-[var(--sb-border)] bg-[var(--sb-surface)] px-3"><button class="mr-2 flex items-center justify-center rounded px-2 py-1 text-xl hover:bg-[var(--sb-gray-3)]" (click)="toggleSidebar()" title="Навигация"><sb-icon name="panelLeft" /></button><strong class="text-sm">{{'app.name'|transloco}}</strong><span class="ml-auto hidden text-xs text-[var(--sb-text-muted)] sm:inline">Smart Barn Platform</span></header>
 <div class="grid h-[calc(100dvh-56px)] transition-[grid-template-columns] duration-150" [style.grid-template-columns]="sidebarOpen()?'52px 260px minmax(0,1fr)':'52px 0 minmax(0,1fr)'">
 <aside class="relative z-20 border-r border-[var(--sb-border)] bg-[var(--sb-surface)]"><nav class="flex h-full w-[52px] flex-col items-center gap-1 py-2">
 @for(space of spaces;track space.id){<button class="group relative flex h-11 w-11 items-center justify-center rounded-lg text-xl" [class.mt-auto]="space.id==='settings'" [class.bg-[var(--sb-accent-soft)]]="activeSpace()===space.id" (click)="selectSpace(space.id)" [attr.aria-label]="space.label"><sb-icon [name]="space.icon" /><span class="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded bg-[var(--sb-text)] px-2 py-1 text-xs text-[var(--sb-bg)] shadow-lg group-hover:block">{{space.label}}</span></button>}
