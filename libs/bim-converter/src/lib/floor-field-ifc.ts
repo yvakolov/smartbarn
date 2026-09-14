@@ -31,25 +31,36 @@ export function serializeFloorFieldIfc4(model: FloorFieldModel): string {
   const storeyPlacement = add(`IFCLOCALPLACEMENT($,#${worldAxis})`);
   const storey = add(`IFCBUILDINGSTOREY('${guid()}',#${ownerHistory},'Ground Floor',$,$,#${storeyPlacement},$,$,.ELEMENT.,${number(model.referencePlane.elevationMm)})`);
   add(`IFCRELAGGREGATES('${guid()}',#${ownerHistory},$,$,#${project},(#${storey}))`);
-  const extrusionDirection = add('IFCDIRECTION((0.,0.,1.))');
 
-  const slabs: number[] = [];
-  let aboveOffset = 0;
-  for (const layer of model.layersAbove) {
-    const z = model.referencePlane.elevationMm + aboveOffset;
-    slabs.push(addLayer(layer, z));
-    aboveOffset += layer.thicknessMm;
-  }
+  const layers = orderedLayersTopToBottom(model);
+  if (layers.length) {
+    const totalThicknessMm = layers.reduce((sum, layer) => sum + layer.thicknessMm, 0);
+    const topElevationMm =
+      model.referencePlane.elevationMm + model.layersAbove.reduce((sum, layer) => sum + layer.thicknessMm, 0);
 
-  let belowOffset = 0;
-  for (const layer of model.layersBelow) {
-    belowOffset += layer.thicknessMm;
-    const z = model.referencePlane.elevationMm - belowOffset;
-    slabs.push(addLayer(layer, z));
-  }
+    const slabPoint = add(`IFCCARTESIANPOINT((0.,0.,${number(topElevationMm)}))`);
+    const slabAxis = add(`IFCAXIS2PLACEMENT3D(#${slabPoint},$,$)`);
+    const slabPlacement = add(`IFCLOCALPLACEMENT(#${storeyPlacement},#${slabAxis})`);
+    const profile = add(
+      `IFCRECTANGLEPROFILEDEF(.AREA.,$,$,${number(model.geometry.lengthMm)},${number(model.geometry.widthMm)})`,
+    );
+    const downwardDirection = add('IFCDIRECTION((0.,0.,-1.))');
+    const solid = add(
+      `IFCEXTRUDEDAREASOLID(#${profile},#${worldAxis},#${downwardDirection},${number(totalThicknessMm)})`,
+    );
+    const representation = add(`IFCSHAPEREPRESENTATION(#${context},'Body','SweptSolid',(#${solid}))`);
+    const shape = add(`IFCPRODUCTDEFINITIONSHAPE($,$,(#${representation}))`);
+    const slab = add(
+      `IFCSLAB('${guid()}',#${ownerHistory},'Цокольное перекрытие',$,'SmartBarn Floor Field',#${slabPlacement},#${shape},$,.BASESLAB.)`,
+    );
 
-  if (slabs.length) {
-    add(`IFCRELCONTAINEDINSPATIALSTRUCTURE('${guid()}',#${ownerHistory},$,$,(${slabs.map((id) => `#${id}`).join(',')}),#${storey})`);
+    const materialLayerIds = layers.map((layer) => addMaterialLayer(layer));
+    const materialSet = add(
+      `IFCMATERIALLAYERSET((${materialLayerIds.map((id) => `#${id}`).join(',')}),'SmartBarn Floor Field',$)`,
+    );
+    const materialUsage = add(`IFCMATERIALLAYERSETUSAGE(#${materialSet},.AXIS3.,.NEGATIVE.,0.,$)`);
+    add(`IFCRELASSOCIATESMATERIAL('${guid()}',#${ownerHistory},$,$,(#${slab}),#${materialUsage})`);
+    add(`IFCRELCONTAINEDINSPATIALSTRUCTURE('${guid()}',#${ownerHistory},$,$,(#${slab}),#${storey})`);
   }
 
   const embeddedModel = encodeURIComponent(JSON.stringify(model));
@@ -68,21 +79,11 @@ export function serializeFloorFieldIfc4(model: FloorFieldModel): string {
     '',
   ].join('\n');
 
-  function addLayer(layer: FloorFieldLayer, z: number): number {
-    const point = add(`IFCCARTESIANPOINT((0.,0.,${number(z)}))`);
-    const axis = add(`IFCAXIS2PLACEMENT3D(#${point},$,$)`);
-    const placement = add(`IFCLOCALPLACEMENT(#${storeyPlacement},#${axis})`);
-    const profile = add(`IFCRECTANGLEPROFILEDEF(.AREA.,$,$,${number(model.geometry.lengthMm)},${number(model.geometry.widthMm)})`);
-    const solid = add(`IFCEXTRUDEDAREASOLID(#${profile},#${worldAxis},#${extrusionDirection},${number(layer.thicknessMm)})`);
-    const representation = add(`IFCSHAPEREPRESENTATION(#${context},'Body','SweptSolid',(#${solid}))`);
-    const shape = add(`IFCPRODUCTDEFINITIONSHAPE($,$,(#${representation}))`);
-    const slab = add(`IFCSLAB('${guid()}',#${ownerHistory},'${escapeIfc(layer.name)}',$,'SmartBarn layer ${escapeIfc(layer.id)}',#${placement},#${shape},$,.BASESLAB.)`);
+  function addMaterialLayer(layer: FloorFieldLayer): number {
     const material = add(`IFCMATERIAL('${escapeIfc(layer.type)}',$,$)`);
-    const materialLayer = add(`IFCMATERIALLAYER(#${material},${number(layer.thicknessMm)},$,$,'${escapeIfc(layer.name)}',$,$)`);
-    const materialSet = add(`IFCMATERIALLAYERSET((#${materialLayer}),'${escapeIfc(layer.name)}',$)`);
-    const materialUsage = add(`IFCMATERIALLAYERSETUSAGE(#${materialSet},.AXIS3.,.POSITIVE.,0.,$)`);
-    add(`IFCRELASSOCIATESMATERIAL('${guid()}',#${ownerHistory},$,$,(#${slab}),#${materialUsage})`);
-    return slab;
+    return add(
+      `IFCMATERIALLAYER(#${material},${number(layer.thicknessMm)},$,$,'${escapeIfc(layer.name)}',$,$)`,
+    );
   }
 }
 
@@ -96,6 +97,10 @@ export function parseSmartBarnFloorFieldIfc4(input: string): FloorFieldModel {
   if (end < 0) throw new Error('SmartBarn IFC metadata is malformed.');
   const model = JSON.parse(decodeURIComponent(input.slice(start, end))) as unknown;
   return validateFloorFieldModel(model);
+}
+
+function orderedLayersTopToBottom(model: FloorFieldModel): readonly FloorFieldLayer[] {
+  return [...model.layersAbove].reverse().concat(model.layersBelow);
 }
 
 function escapeIfc(value: string): string {
