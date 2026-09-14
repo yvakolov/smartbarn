@@ -8,8 +8,11 @@ export interface FoundationModel {
 export interface StoreyModel {
   readonly id: string;
   readonly name: string;
+  /** Bottom of the floor layers that are under walls. */
   readonly baseElevationMm: number;
+  /** Clear wall height from the floor datum (top of under-wall layers) to the wall top. */
   readonly clearanceMm: number;
+  /** Under-wall floor thickness + clearance. */
   readonly heightMm: number;
 }
 
@@ -26,7 +29,7 @@ const DEFAULT_CLEARANCE_MM=2800;
 export const DEFAULT_BUILDING_STRUCTURE: BuildingStructureModel = {
   version: 1,
   foundation: { baseElevationMm: -600, heightMm: 600 },
-  storeys: [{ id: 'storey-1', name: 'Этаж 1', baseElevationMm: 0, clearanceMm: DEFAULT_CLEARANCE_MM, heightMm: DEFAULT_CLEARANCE_MM + 224 }],
+  storeys: [{ id: 'storey-1', name: 'Этаж 1', baseElevationMm: -224, clearanceMm: DEFAULT_CLEARANCE_MM, heightMm: DEFAULT_CLEARANCE_MM + 224 }],
 };
 
 const numberInRange = (value: unknown, fallback: number, min: number, max: number): number => {
@@ -34,13 +37,17 @@ const numberInRange = (value: unknown, fallback: number, min: number, max: numbe
   return Number.isFinite(numeric) ? Math.min(max, Math.max(min, Math.round(numeric))) : fallback;
 };
 
+export function storeyFloorDatumElevationMm(storey:StoreyModel,underWallsThicknessMm=loadUnderWallsThicknessMm()):number{
+  return storey.baseElevationMm+underWallsThicknessMm;
+}
+
 export function storeyTopElevationMm(storey: StoreyModel): number {
   return storey.baseElevationMm + storey.heightMm;
 }
 
 export function roofBaseElevationMm(structure: BuildingStructureModel): number {
   const last = structure.storeys.at(-1);
-  return last ? storeyTopElevationMm(last) : structure.foundation.baseElevationMm + structure.foundation.heightMm;
+  return last ? storeyTopElevationMm(last) : 0;
 }
 
 export function normalizeBuildingStructure(value: unknown): BuildingStructureModel {
@@ -53,17 +60,16 @@ export function normalizeBuildingStructure(value: unknown): BuildingStructureMod
   };
   const underWallsThicknessMm=loadUnderWallsThicknessMm();
   const rawStoreys = Array.isArray(source.storeys) ? source.storeys : DEFAULT_BUILDING_STRUCTURE.storeys;
-  let nextBase = foundation.baseElevationMm + foundation.heightMm;
+  let nextBase = -underWallsThicknessMm;
   const storeys = rawStoreys.map((raw, index) => {
     const sourceStorey = raw as Partial<StoreyModel>;
-    const baseElevationMm = numberInRange(sourceStorey.baseElevationMm, nextBase, -10000, 50000);
     const legacyHeightMm=numberInRange(sourceStorey.heightMm, DEFAULT_CLEARANCE_MM+underWallsThicknessMm, 1800, 10000);
     const clearanceMm=numberInRange(sourceStorey.clearanceMm, Math.max(1800,legacyHeightMm-underWallsThicknessMm), 1800, 10000);
     const heightMm=clearanceMm+underWallsThicknessMm;
     const storey: StoreyModel = {
       id: typeof sourceStorey.id === 'string' && sourceStorey.id ? sourceStorey.id : `storey-${index + 1}`,
       name: typeof sourceStorey.name === 'string' && sourceStorey.name.trim() ? sourceStorey.name.trim() : `Этаж ${index + 1}`,
-      baseElevationMm,
+      baseElevationMm:nextBase,
       clearanceMm,
       heightMm,
     };
@@ -91,10 +97,13 @@ export function saveBuildingStructure(structure: BuildingStructureModel): void {
 
 export function rebuildStoreyElevations(structure: BuildingStructureModel): BuildingStructureModel {
   const underWallsThicknessMm=loadUnderWallsThicknessMm();
-  let baseElevationMm = structure.foundation.baseElevationMm + structure.foundation.heightMm;
+  // The first-storey datum 0.000 is the top of the highest layer marked "under walls".
+  // Therefore the bottom of the first storey is exactly one under-wall assembly thickness below zero.
+  let baseElevationMm = -underWallsThicknessMm;
   const storeys = structure.storeys.map((storey) => {
     const heightMm=storey.clearanceMm+underWallsThicknessMm;
     const next = { ...storey, baseElevationMm, heightMm };
+    // For upper storeys, the previous wall top is the lower boundary of the next storey.
     baseElevationMm = storeyTopElevationMm(next);
     return next;
   });
