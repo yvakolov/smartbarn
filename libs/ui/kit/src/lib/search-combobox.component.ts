@@ -15,16 +15,9 @@ interface SearchComboboxGroup {
 }
 
 /**
- * SmartBarn reusable searchable combobox primitive.
- *
- * Public API is signal-first (`input()` / `model()` / `output()`) and the
- * component implements Angular 22 `FormValueControl`, so it can be bound by
- * `[formField]` without a ControlValueAccessor.
- *
- * Domain concepts do not belong here: callers provide flat options and an
- * optional non-selectable group label. The interaction model follows Spartan
- * combobox conventions: searchable input, grouped listbox, non-selectable
- * group headings and single selection.
+ * SmartBarn reusable searchable single-value combobox.
+ * Signal-first API, compatible with Angular Signal Forms through FormValueControl.
+ * Group labels are presentation-only; only options are selectable.
  */
 @Component({
   selector: 'sb-search-combobox',
@@ -32,71 +25,75 @@ interface SearchComboboxGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'relative block min-w-0' },
   template: `
-    <div class="relative">
-      <input
-        type="text"
-        role="combobox"
-        autocomplete="off"
-        class="w-full rounded-md border border-[var(--sb-border)] bg-[var(--sb-surface)] px-3 py-2 pr-8 text-sm text-[var(--sb-text)] outline-none focus:border-[var(--sb-accent)]"
-        [placeholder]="placeholder()"
-        [disabled]="disabled()"
-        [value]="displayValue()"
-        [attr.aria-expanded]="open()"
-        aria-autocomplete="list"
-        (focus)="open.set(true)"
-        (click)="open.set(true)"
-        (input)="onSearch($event)"
-        (keydown.escape)="close()"
-        (keydown.arrowdown)="open.set(true)"
-        (blur)="onBlur()"
-      />
+    <div class="relative" (focusout)="onFocusOut($event)">
       <button
         type="button"
-        class="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-[var(--sb-text-muted)] hover:bg-[var(--sb-gray-3)]"
-        tabindex="-1"
+        class="flex h-9 w-full min-w-0 items-center gap-2 rounded-md border border-[var(--sb-border)] bg-[var(--sb-bg)] px-3 text-left text-sm text-[var(--sb-text)] outline-none focus:border-[var(--sb-accent)] focus:ring-1 focus:ring-[var(--sb-accent)]"
         [disabled]="disabled()"
-        (mousedown)="$event.preventDefault()"
+        [attr.aria-expanded]="open()"
+        aria-haspopup="listbox"
         (click)="toggle()"
-        aria-label="Открыть список"
-      >⌄</button>
-    </div>
-
-    @if (open() && !disabled()) {
-      <div
-        class="absolute z-50 mt-1 max-h-72 w-full min-w-[280px] overflow-auto rounded-md border border-[var(--sb-border)] bg-[var(--sb-surface)] p-1 shadow-xl"
-        role="listbox"
       >
-        @if (groups().length === 0) {
-          <div class="px-3 py-2 text-sm text-[var(--sb-text-muted)]">{{ emptyText() }}</div>
-        }
-        @for (group of groups(); track group.name) {
-          @if (group.name) {
-            <div class="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]" role="presentation">
-              {{ group.name }}
+        <span class="min-w-0 flex-1 truncate" [class.text-[var(--sb-text-muted)]]="!selected()">
+          {{ selected()?.label || placeholder() }}
+        </span>
+        <span class="shrink-0 text-xs text-[var(--sb-text-muted)]" aria-hidden="true">⌄</span>
+      </button>
+
+      @if (open() && !disabled()) {
+        <div
+          class="absolute left-0 top-[calc(100%+4px)] z-50 w-full min-w-[280px] overflow-hidden rounded-md border border-[var(--sb-border)] bg-[var(--sb-surface)] shadow-xl"
+        >
+          <div class="border-b border-[var(--sb-border)] p-2">
+            <div class="flex items-center gap-2 rounded-md border border-[var(--sb-border)] bg-[var(--sb-bg)] px-2 focus-within:border-[var(--sb-accent)] focus-within:ring-1 focus-within:ring-[var(--sb-accent)]">
+              <span class="shrink-0 text-[var(--sb-text-muted)]" aria-hidden="true">⌕</span>
+              <input
+                #searchInput
+                type="search"
+                autocomplete="off"
+                class="h-9 min-w-0 flex-1 border-0 bg-transparent px-1 text-sm text-[var(--sb-text)] outline-none"
+                [placeholder]="searchPlaceholder()"
+                [value]="query()"
+                (input)="onSearch($event)"
+                (keydown.escape)="close()"
+              />
             </div>
-          }
-          @for (option of group.options; track option.value) {
-            <button
-              type="button"
-              role="option"
-              class="flex w-full items-center justify-between gap-3 rounded px-3 py-2 text-left text-sm hover:bg-[var(--sb-accent-soft)] disabled:opacity-50"
-              [disabled]="option.disabled"
-              [attr.aria-selected]="value() === option.value"
-              (mousedown)="$event.preventDefault()"
-              (click)="select(option)"
-            >
-              <span class="truncate">{{ option.label }}</span>
-              @if (value() === option.value) { <span aria-hidden="true">✓</span> }
-            </button>
-          }
-        }
-      </div>
-    }
+          </div>
+
+          <div class="max-h-72 overflow-auto p-1" role="listbox">
+            @if (groups().length === 0) {
+              <div class="px-3 py-4 text-center text-sm text-[var(--sb-text-muted)]">{{ emptyText() }}</div>
+            }
+            @for (group of groups(); track group.name) {
+              @if (group.name) {
+                <div class="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]" role="presentation">
+                  {{ group.name }}
+                </div>
+              }
+              @for (option of group.options; track option.value) {
+                <button
+                  type="button"
+                  role="option"
+                  class="flex w-full items-center justify-between gap-3 rounded px-3 py-2 text-left text-sm text-[var(--sb-text)] hover:bg-[var(--sb-accent-soft)] disabled:opacity-50"
+                  [disabled]="option.disabled"
+                  [attr.aria-selected]="value() === option.value"
+                  (click)="select(option)"
+                >
+                  <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
+                  @if (value() === option.value) { <span class="shrink-0" aria-hidden="true">✓</span> }
+                </button>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
   `,
 })
 export class SearchComboboxComponent implements FormValueControl<string | null> {
   readonly options = input<readonly SearchComboboxOption[]>([]);
   readonly placeholder = input('Выберите значение');
+  readonly searchPlaceholder = input('Поиск…');
   readonly emptyText = input('Ничего не найдено');
   readonly disabled = input(false);
   readonly value = model<string | null>(null);
@@ -104,17 +101,16 @@ export class SearchComboboxComponent implements FormValueControl<string | null> 
 
   readonly open = signal(false);
   readonly query = signal('');
-
   readonly selected = computed(() => this.options().find((option) => option.value === this.value()) ?? null);
-  readonly displayValue = computed(() => (this.open() && this.query() ? this.query() : this.selected()?.label ?? this.query()));
 
   readonly groups = computed<readonly SearchComboboxGroup[]>(() => {
-    const search = this.query().trim().toLocaleLowerCase('ru');
+    const search = this.normalize(this.query());
     const filtered = this.options().filter((option) => {
       if (!search) return true;
-      const haystack = [option.label, option.group ?? '', ...(option.keywords ?? [])].join(' ').toLocaleLowerCase('ru');
-      return haystack.includes(search);
+      const haystack = [option.label, option.group ?? '', ...(option.keywords ?? [])].join(' ');
+      return this.normalize(haystack).includes(search);
     });
+
     const names: string[] = [];
     const map = new Map<string, SearchComboboxOption[]>();
     for (const option of filtered) {
@@ -128,9 +124,14 @@ export class SearchComboboxComponent implements FormValueControl<string | null> 
     return names.map((name) => ({ name, options: map.get(name)! }));
   });
 
+  toggle(): void {
+    if (this.disabled()) return;
+    this.query.set('');
+    this.open.update((value) => !value);
+  }
+
   onSearch(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);
-    this.open.set(true);
   }
 
   select(option: SearchComboboxOption): void {
@@ -141,21 +142,18 @@ export class SearchComboboxComponent implements FormValueControl<string | null> 
     this.touch.emit();
   }
 
-  toggle(): void {
-    this.query.set('');
-    this.open.update((value) => !value);
-  }
-
   close(): void {
+    if (!this.open()) return;
     this.query.set('');
     this.open.set(false);
+    this.touch.emit();
   }
 
-  onBlur(): void {
-    queueMicrotask(() => {
-      this.close();
-      this.touch.emit();
-    });
+  onFocusOut(event: FocusEvent): void {
+    const host = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget as Node | null;
+    if (next && host.contains(next)) return;
+    this.close();
   }
 
   focus(): void {
@@ -166,5 +164,9 @@ export class SearchComboboxComponent implements FormValueControl<string | null> 
     this.value.set(null);
     this.query.set('');
     this.open.set(false);
+  }
+
+  private normalize(value: string): string {
+    return value.trim().toLocaleLowerCase('ru');
   }
 }
