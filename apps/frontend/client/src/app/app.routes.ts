@@ -7,6 +7,18 @@ export const appRoutes: Routes = [
       import('./layouts/shell-layout/shell-layout.component').then((m) => m.ShellLayoutComponent),
     children: [
       {
+        path: 'foundation',
+        data: { mode: 'foundation' },
+        loadComponent: () =>
+          import('./features/building-structure/building-structure.page').then((m) => m.BuildingStructurePage),
+      },
+      {
+        path: 'storeys',
+        data: { mode: 'storeys' },
+        loadComponent: () =>
+          import('./features/building-structure/building-structure.page').then((m) => m.BuildingStructurePage),
+      },
+      {
         path: 'floor-field',
         loadComponent: () =>
           import('./features/floor-field/floor-field.page').then((m) => m.FloorFieldPage),
@@ -34,9 +46,9 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('./features/settings/settings.page').then((m) => m.SettingsPage),
       },
-      { path: '', pathMatch: 'full', redirectTo: 'floor-field' },
+      { path: '', pathMatch: 'full', redirectTo: 'foundation' },
     ],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'app/floor-field' },
-  { path: '**', redirectTo: 'app/floor-field' },
+  { path: '', pathMatch: 'full', redirectTo: 'app/foundation' },
+  { path: '**', redirectTo: 'app/foundation' },
 ];
