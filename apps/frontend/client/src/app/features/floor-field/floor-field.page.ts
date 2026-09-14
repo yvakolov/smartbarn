@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { lucidePanelRight, lucidePlus, lucideX } from '@smartbarn/icons';
+import { IconComponent, provideIcons } from '@smartbarn/ui-kit';
 import { FloorField3dComponent } from './floor-field-3d.component';
 import { FloorFieldPreferencesStore,type CameraModePreference,type FloorFieldViewPreference } from './floor-field-preferences.store';
 import { FloorFieldStore } from './floor-field.store';
 import { MaterialComboboxComponent } from './material-combobox.component';
 import { loadMaterialCatalog } from '../materials/material-catalog';
 type ResizeHandle='length'|'width'|'both';interface PreviewRect{readonly x:number;readonly y:number;readonly width:number;readonly height:number;}
-@Component({selector:'smartbarn-floor-field-page',standalone:true,imports:[FloorField3dComponent,MaterialComboboxComponent,TranslocoPipe],changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./floor-field.page.html',styleUrl:'./floor-field.page.scss'})
+@Component({selector:'smartbarn-floor-field-page',standalone:true,imports:[FloorField3dComponent,MaterialComboboxComponent,TranslocoPipe,IconComponent],providers:[...provideIcons(lucidePanelRight,lucidePlus,lucideX)],changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./floor-field.page.html',styleUrl:'./floor-field.page.scss'})
 export class FloorFieldPage{
  private static readonly MIN=500;private static readonly MAX=50000;private draggedLayerId:number|null=null;private dragResizeState:{handle:ResizeHandle;startX:number;startY:number;startLength:number;startWidth:number}|null=null;
  private readonly store=inject(FloorFieldStore);private readonly preferences=inject(FloorFieldPreferencesStore);readonly materials=loadMaterialCatalog();
