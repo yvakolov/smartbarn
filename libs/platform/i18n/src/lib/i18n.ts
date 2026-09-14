@@ -17,7 +17,10 @@ export class SmartBarnTranslocoLoader implements TranslocoLoader {
   private readonly http = inject(HttpClient);
 
   getTranslation(lang: string): Observable<Record<string, unknown>> {
-    return this.http.get<Record<string, unknown>>(`./i18n/${lang}.json`);
+    // Locale JSON files keep stable names on GitHub Pages. A cache-busting query
+    // prevents a newly deployed application bundle from receiving an older
+    // translation document that does not yet contain newly added keys.
+    return this.http.get<Record<string, unknown>>(`./i18n/${lang}.json?v=${Date.now()}`);
   }
 }
 
