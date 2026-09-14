@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -16,10 +16,7 @@ type Workspace = 'house' | 'materials' | 'exchange' | 'settings';
         <span class="ml-auto hidden text-xs text-[var(--sb-text-muted)] sm:inline">Smart Barn Platform</span>
       </header>
 
-      <div
-        class="grid h-[calc(100dvh-56px)] transition-[grid-template-columns] duration-150"
-        [style.grid-template-columns]="sidebarOpen() ? '52px 220px minmax(0,1fr)' : '52px 0 minmax(0,1fr)'"
-      >
+      <div class="grid h-[calc(100dvh-56px)] transition-[grid-template-columns] duration-150" [style.grid-template-columns]="sidebarOpen() ? '52px 220px minmax(0,1fr)' : '52px 0 minmax(0,1fr)'">
         <aside class="relative z-20 border-r border-[var(--sb-border)] bg-[var(--sb-surface)]">
           <nav class="flex h-full w-[52px] flex-col items-center gap-1 py-2" aria-label="Пространства">
             <button class="group relative flex h-11 w-11 items-center justify-center rounded-lg" [class.bg-[var(--sb-accent-soft)]]="activeSpace()==='house'" (click)="selectSpace('house')" aria-label="Конструкция дома">
@@ -39,32 +36,23 @@ type Workspace = 'house' | 'materials' | 'exchange' | 'settings';
               <span class="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded bg-[var(--sb-text)] px-2 py-1 text-xs text-[var(--sb-bg)] shadow-lg group-hover:block">Настройки</span>
             </button>
           </nav>
-          @if (touchLabel()) {
-            <div class="pointer-events-none absolute left-[58px] top-3 z-50 whitespace-nowrap rounded bg-[var(--sb-text)] px-2 py-1 text-xs text-[var(--sb-bg)] shadow-lg md:hidden">{{ touchLabel() }}</div>
-          }
+          @if (touchLabel()) {<div class="pointer-events-none absolute left-[58px] top-3 z-50 whitespace-nowrap rounded bg-[var(--sb-text)] px-2 py-1 text-xs text-[var(--sb-bg)] shadow-lg md:hidden">{{ touchLabel() }}</div>}
         </aside>
 
         <aside class="overflow-hidden border-r border-[var(--sb-border)] bg-[var(--sb-surface)]">
           <nav class="flex h-full w-[220px] flex-col gap-1 p-3 text-sm">
             <div class="mb-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]">{{ spaceTitle() }}</div>
             @switch (activeSpace()) {
-              @case ('house') {
-                <a routerLink="/app/floor-field" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Перекрытие</a>
-              }
-              @case ('materials') {
-                <a routerLink="/app/materials" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Материалы</a>
-              }
+              @case ('house') {<a routerLink="/app/floor-field" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Перекрытие</a>}
+              @case ('materials') {<a routerLink="/app/materials" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Материалы</a>}
               @case ('exchange') {
                 <a routerLink="/app/exchange/import" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Импорт</a>
                 <a routerLink="/app/exchange/export" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Экспорт</a>
               }
-              @case ('settings') {
-                <a routerLink="/app/settings" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Общие</a>
-              }
+              @case ('settings') {<a routerLink="/app/settings" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">Общие</a>}
             }
           </nav>
         </aside>
-
         <main class="min-h-0 min-w-0 overflow-hidden"><router-outlet /></main>
       </div>
     </div>
@@ -72,19 +60,17 @@ type Workspace = 'house' | 'materials' | 'exchange' | 'settings';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShellLayoutComponent {
+  private readonly router = inject(Router);
   readonly sidebarOpen = signal(true);
   readonly activeSpace = signal<Workspace>(this.spaceFromUrl(this.router.url));
   readonly touchLabel = signal('');
   private touchTimer?: ReturnType<typeof setTimeout>;
 
-  constructor(private readonly router: Router) {}
-
   toggleSidebar(): void { this.sidebarOpen.update((value) => !value); }
 
   selectSpace(space: Workspace): void {
     this.activeSpace.set(space);
-    const label = this.labelForSpace(space);
-    this.touchLabel.set(label);
+    this.touchLabel.set(this.labelForSpace(space));
     if (this.touchTimer) clearTimeout(this.touchTimer);
     this.touchTimer = setTimeout(() => this.touchLabel.set(''), 1100);
     void this.router.navigateByUrl(this.defaultUrl(space));
