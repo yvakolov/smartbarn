@@ -28,8 +28,7 @@ type Workspace='house'|'materials'|'exchange'|'settings';
     <div class="rounded px-3 py-2 text-[var(--sb-text-muted)] opacity-70">{{'shell.roof'|transloco}} <span class="float-right text-xs">{{'shell.soon'|transloco}}</span></div>
   }
   @case('materials'){
-    <a routerLink="/app/materials" [queryParams]="{}" class="rounded px-3 py-2 font-medium text-[var(--sb-text)]">{{'shell.allMaterials'|transloco}}</a>
-    <div class="mt-1 space-y-1">
+    <div class="space-y-1">
       @for(group of materialGroups;track group.id){
         <details class="group/tree rounded" open>
           <summary class="cursor-pointer list-none rounded px-3 py-2 text-[var(--sb-text-muted)] hover:bg-[var(--sb-gray-3)]">
