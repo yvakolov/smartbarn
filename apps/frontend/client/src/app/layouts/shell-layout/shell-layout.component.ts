@@ -10,6 +10,7 @@ import {
   lucideSettings,
 } from '@smartbarn/icons';
 import { IconComponent, provideIcons } from '@smartbarn/ui-kit';
+import { BUILDING_STRUCTURE_CHANGED_EVENT, loadBuildingStructure, storeyTopElevationMm, type BuildingStructureModel } from '../../features/building-structure/building-structure';
 import { MATERIAL_CATALOG_CHANGED_EVENT, MATERIAL_GROUPS, loadMaterialCatalog, type MaterialGroup, type MaterialRecord } from '../../features/materials/material-catalog';
 
 type Workspace='house'|'materials'|'exchange'|'settings';
@@ -23,8 +24,22 @@ type Workspace='house'|'materials'|'exchange'|'settings';
 <aside class="overflow-hidden border-r border-[var(--sb-border)] bg-[var(--sb-surface)]"><nav class="flex h-full w-[260px] flex-col gap-1 overflow-auto p-3 text-sm"><div class="mb-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--sb-text-muted)]">{{spaceTitleKey()|transloco}}</div>
 @switch(activeSpace()){
   @case('house'){
-    <a routerLink="/app/floor-field" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="rounded px-3 py-2 text-[var(--sb-text-muted)]">{{'shell.floorField'|transloco}}</a>
-    <div class="rounded px-3 py-2 text-[var(--sb-text-muted)] opacity-70">{{'shell.walls'|transloco}} <span class="float-right text-xs">{{'shell.soon'|transloco}}</span></div>
+    <a routerLink="/app/foundation" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="block rounded px-3 py-2 text-[var(--sb-text-muted)]">{{'structure.foundation'|transloco}}</a>
+    <details class="group/tree rounded" open>
+      <summary class="cursor-pointer list-none rounded px-3 py-2 text-[var(--sb-text-muted)] hover:bg-[var(--sb-gray-3)]"><sb-icon name="chevronRight" class="mr-1 transition-transform group-open/tree:rotate-90" />{{'structure.storeys'|transloco}}</summary>
+      <div class="ml-5 border-l border-[var(--sb-border)] pl-2">
+        <a routerLink="/app/storeys" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="mb-1 block rounded px-3 py-1.5 text-xs text-[var(--sb-text-muted)]">{{'structure.manageStoreys'|transloco}}</a>
+        @for(storey of buildingStructure().storeys;track storey.id;let i=$index){
+          <details class="group/storey rounded" open>
+            <summary class="cursor-pointer list-none rounded px-3 py-1.5 text-[var(--sb-text-muted)] hover:bg-[var(--sb-gray-3)]"><sb-icon name="chevronRight" class="mr-1 transition-transform group-open/storey:rotate-90" />{{'structure.storey'|transloco}} {{i+1}} <span class="float-right text-[10px] opacity-70">+{{storey.baseElevationMm/1000}} / +{{storeyTop(storey.id)/1000}} м</span></summary>
+            <div class="ml-5 border-l border-[var(--sb-border)] pl-2">
+              <div class="rounded px-3 py-1.5 text-xs text-[var(--sb-text-muted)] opacity-70">{{'shell.walls'|transloco}} <span class="float-right">{{'shell.soon'|transloco}}</span></div>
+              <a routerLink="/app/floor-field" [queryParams]="{storey:storey.id}" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="block rounded px-3 py-1.5 text-xs text-[var(--sb-text-muted)]">{{'shell.floorField'|transloco}}</a>
+            </div>
+          </details>
+        }
+      </div>
+    </details>
     <div class="rounded px-3 py-2 text-[var(--sb-text-muted)] opacity-70">{{'shell.roof'|transloco}} <span class="float-right text-xs">{{'shell.soon'|transloco}}</span></div>
   }
   @case('materials'){
@@ -59,17 +74,20 @@ export class ShellLayoutComponent implements OnDestroy{
   readonly touchLabelKey=signal('');
   readonly materialGroups=MATERIAL_GROUPS;
   readonly materials=signal<MaterialRecord[]>(loadMaterialCatalog());
+  readonly buildingStructure=signal<BuildingStructureModel>(loadBuildingStructure());
   private touchTimer?:ReturnType<typeof setTimeout>;
   private readonly refreshMaterials=()=>this.materials.set(loadMaterialCatalog());
+  private readonly refreshBuildingStructure=()=>this.buildingStructure.set(loadBuildingStructure());
   readonly spaces:ReadonlyArray<{id:Workspace;labelKey:string;icon:string}>=[{id:'house',labelKey:'shell.house',icon:'house'},{id:'materials',labelKey:'shell.materials',icon:'library'},{id:'exchange',labelKey:'shell.exchange',icon:'arrowDownUp'},{id:'settings',labelKey:'shell.settings',icon:'settings'}];
 
-  constructor(){if(typeof window!=='undefined')window.addEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);}
-  ngOnDestroy():void{if(typeof window!=='undefined')window.removeEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);if(this.touchTimer)clearTimeout(this.touchTimer);}
+  constructor(){if(typeof window!=='undefined'){window.addEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);window.addEventListener(BUILDING_STRUCTURE_CHANGED_EVENT,this.refreshBuildingStructure);}}
+  ngOnDestroy():void{if(typeof window!=='undefined'){window.removeEventListener(MATERIAL_CATALOG_CHANGED_EVENT,this.refreshMaterials);window.removeEventListener(BUILDING_STRUCTURE_CHANGED_EVENT,this.refreshBuildingStructure);}if(this.touchTimer)clearTimeout(this.touchTimer);}
   toggleSidebar(){this.sidebarOpen.update(v=>!v);}
-  selectSpace(s:Workspace){this.activeSpace.set(s);if(s==='materials')this.refreshMaterials();this.touchLabelKey.set(this.labelKeyForSpace(s));if(this.touchTimer)clearTimeout(this.touchTimer);this.touchTimer=setTimeout(()=>this.touchLabelKey.set(''),1100);void this.router.navigateByUrl(this.defaultUrl(s));}
+  selectSpace(s:Workspace){this.activeSpace.set(s);if(s==='materials')this.refreshMaterials();if(s==='house')this.refreshBuildingStructure();this.touchLabelKey.set(this.labelKeyForSpace(s));if(this.touchTimer)clearTimeout(this.touchTimer);this.touchTimer=setTimeout(()=>this.touchLabelKey.set(''),1100);void this.router.navigateByUrl(this.defaultUrl(s));}
   spaceTitleKey(){return this.labelKeyForSpace(this.activeSpace());}
   materialsForGroup(group:MaterialGroup){return this.materials().filter(material=>material.group===group);}
-  private defaultUrl(s:Workspace){return s==='house'?'/app/floor-field':s==='materials'?'/app/materials':s==='exchange'?'/app/exchange/import':'/app/settings';}
+  storeyTop(id:string){const storey=this.buildingStructure().storeys.find(item=>item.id===id);return storey?storeyTopElevationMm(storey):0;}
+  private defaultUrl(s:Workspace){return s==='house'?'/app/foundation':s==='materials'?'/app/materials':s==='exchange'?'/app/exchange/import':'/app/settings';}
   private labelKeyForSpace(s:Workspace){return this.spaces.find(x=>x.id===s)?.labelKey??'';}
   private spaceFromUrl(url:string):Workspace{return url.includes('/materials')?'materials':url.includes('/exchange')||url.includes('/import-export')?'exchange':url.includes('/settings')?'settings':'house';}
 }
