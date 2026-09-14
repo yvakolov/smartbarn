@@ -1,171 +1,25 @@
 import { computed } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { materialById } from '../materials/material-catalog';
 
-export interface FloorLayer {
-  readonly id: number;
-  readonly kind: string;
-  readonly name: string;
-  readonly thicknessMm: number;
-  readonly color: string;
-}
-
-type FloorFieldStoreStatus = 'idle' | 'ready' | 'error';
-
-interface FloorFieldState {
-  readonly lengthMm: number;
-  readonly widthMm: number;
-  readonly elevationMm: number;
-  readonly layers: readonly FloorLayer[];
-  readonly status: FloorFieldStoreStatus;
-}
-
-interface PersistedFloorFieldState {
-  readonly version: 1;
-  readonly lengthMm: number;
-  readonly widthMm: number;
-  readonly elevationMm: number;
-  readonly layers: readonly FloorLayer[];
-}
-
-const STORAGE_KEY = 'smartbarn.floor-field.v1';
-const MIN_SIZE_MM = 500;
-const MAX_SIZE_MM = 50_000;
-
-const DEFAULT_LAYERS: readonly FloorLayer[] = [
-  { id: 1, kind: 'osb', name: 'OSB верхний', thicknessMm: 12, color: '#f5d77a' },
-  { id: 2, kind: 'structure', name: 'Балки + теплоизоляция', thicknessMm: 200, color: '#e58b2a' },
-  { id: 3, kind: 'osb', name: 'OSB нижний', thicknessMm: 12, color: '#f5d77a' },
-];
-
-const initialState: FloorFieldState = {
-  lengthMm: 9_000,
-  widthMm: 6_000,
-  elevationMm: 0,
-  layers: DEFAULT_LAYERS,
-  status: 'idle',
-};
-
-function clampInteger(value: unknown, fallback: number, min: number, max: number): number {
-  const number = Number(value);
-  return Number.isFinite(number) ? Math.min(max, Math.max(min, Math.round(number))) : fallback;
-}
-
-function normalizeLayer(value: unknown): FloorLayer | undefined {
-  if (!value || typeof value !== 'object') return undefined;
-  const layer = value as Partial<FloorLayer>;
-  const id = clampInteger(layer.id, 0, 1, Number.MAX_SAFE_INTEGER);
-  if (!id) return undefined;
-  return {
-    id,
-    kind: typeof layer.kind === 'string' && layer.kind ? layer.kind : 'custom',
-    name: typeof layer.name === 'string' && layer.name ? layer.name : 'Слой',
-    thicknessMm: clampInteger(layer.thicknessMm, 20, 1, 2_000),
-    color: typeof layer.color === 'string' && layer.color ? layer.color : '#8ab4f8',
-  };
-}
-
-function loadPersistedState(): Partial<FloorFieldState> | undefined {
-  if (typeof window === 'undefined') return undefined;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return undefined;
-  const parsed = JSON.parse(raw) as Partial<PersistedFloorFieldState>;
-  if (parsed.version !== 1) return undefined;
-  const layers = Array.isArray(parsed.layers)
-    ? parsed.layers.map(normalizeLayer).filter((layer): layer is FloorLayer => layer !== undefined)
-    : [...DEFAULT_LAYERS];
-  return {
-    lengthMm: clampInteger(parsed.lengthMm, initialState.lengthMm, MIN_SIZE_MM, MAX_SIZE_MM),
-    widthMm: clampInteger(parsed.widthMm, initialState.widthMm, MIN_SIZE_MM, MAX_SIZE_MM),
-    elevationMm: clampInteger(parsed.elevationMm, initialState.elevationMm, -10_000, 50_000),
-    layers: layers.length ? layers : [...DEFAULT_LAYERS],
-  };
-}
-
-export const FloorFieldStore = signalStore(
-  { providedIn: 'root' },
-  withState(initialState),
-  withComputed(({ layers }) => ({
-    totalLayerThicknessMm: computed(() => layers().reduce((sum, layer) => sum + layer.thicknessMm, 0)),
-  })),
-  withMethods((store) => {
-    const persist = (): void => {
-      if (typeof window === 'undefined') return;
-      const state: PersistedFloorFieldState = {
-        version: 1,
-        lengthMm: store.lengthMm(),
-        widthMm: store.widthMm(),
-        elevationMm: store.elevationMm(),
-        layers: store.layers(),
-      };
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    };
-
-    const update = (state: Partial<FloorFieldState>): void => {
-      patchState(store, state);
-      persist();
-    };
-
-    return {
-      initialize(): void {
-        if (store.status() !== 'idle') return;
-        try {
-          const persisted = loadPersistedState();
-          patchState(store, persisted ?? {}, { status: 'ready' });
-          if (!persisted) persist();
-        } catch {
-          patchState(store, { status: 'error' });
-        }
-      },
-      setLength(lengthMm: number): void {
-        update({ lengthMm: clampInteger(lengthMm, store.lengthMm(), MIN_SIZE_MM, MAX_SIZE_MM) });
-      },
-      setWidth(widthMm: number): void {
-        update({ widthMm: clampInteger(widthMm, store.widthMm(), MIN_SIZE_MM, MAX_SIZE_MM) });
-      },
-      setElevation(elevationMm: number): void {
-        update({ elevationMm: clampInteger(elevationMm, store.elevationMm(), -10_000, 50_000) });
-      },
-      swapDimensions(): void {
-        update({ lengthMm: store.widthMm(), widthMm: store.lengthMm() });
-      },
-      resetGeometry(): void {
-        update({ lengthMm: initialState.lengthMm, widthMm: initialState.widthMm, elevationMm: initialState.elevationMm });
-      },
-      addLayer(position: 'top' | 'bottom'): void {
-        const nextId = Math.max(0, ...store.layers().map((layer) => layer.id)) + 1;
-        const layer: FloorLayer = { id: nextId, kind: 'custom', name: 'Новый слой', thicknessMm: 20, color: '#8ab4f8' };
-        update({ layers: position === 'top' ? [layer, ...store.layers()] : [...store.layers(), layer] });
-      },
-      removeLayer(id: number): void {
-        update({ layers: store.layers().filter((layer) => layer.id !== id) });
-      },
-      updateLayer(id: number, patch: Partial<Pick<FloorLayer, 'name' | 'color' | 'thicknessMm'>>): void {
-        update({
-          layers: store.layers().map((layer) =>
-            layer.id === id
-              ? {
-                  ...layer,
-                  ...patch,
-                  thicknessMm:
-                    patch.thicknessMm === undefined
-                      ? layer.thicknessMm
-                      : clampInteger(patch.thicknessMm, layer.thicknessMm, 1, 2_000),
-                }
-              : layer,
-          ),
-        });
-      },
-      reorderLayers(sourceId: number, targetId: number, position: 'before' | 'after'): void {
-        if (sourceId === targetId) return;
-        const layers = [...store.layers()];
-        const sourceIndex = layers.findIndex((layer) => layer.id === sourceId);
-        let targetIndex = layers.findIndex((layer) => layer.id === targetId);
-        if (sourceIndex < 0 || targetIndex < 0) return;
-        const [moved] = layers.splice(sourceIndex, 1);
-        if (sourceIndex < targetIndex) targetIndex--;
-        layers.splice(position === 'after' ? targetIndex + 1 : targetIndex, 0, moved);
-        update({ layers });
-      },
-    };
-  }),
-);
+export interface FloorLayer { readonly id:number; readonly materialId:string; readonly kind:string; readonly name:string; readonly thicknessMm:number; readonly color:string; }
+type FloorFieldStoreStatus='idle'|'ready'|'error';
+interface FloorFieldState{readonly lengthMm:number;readonly widthMm:number;readonly elevationMm:number;readonly layers:readonly FloorLayer[];readonly status:FloorFieldStoreStatus;}
+interface PersistedFloorFieldState{readonly version:1;readonly lengthMm:number;readonly widthMm:number;readonly elevationMm:number;readonly layers:readonly FloorLayer[];}
+const STORAGE_KEY='smartbarn.floor-field.v1',MIN_SIZE_MM=500,MAX_SIZE_MM=50000;
+const DEFAULT_LAYERS:readonly FloorLayer[]=[
+{id:1,materialId:'osb-3',kind:'sheet',name:'OSB-3',thicknessMm:12,color:'#f5d77a'},
+{id:2,materialId:'structural-timber',kind:'wood',name:'Конструкционная древесина',thicknessMm:200,color:'#e58b2a'},
+{id:3,materialId:'osb-3',kind:'sheet',name:'OSB-3',thicknessMm:12,color:'#f5d77a'}];
+const initialState:FloorFieldState={lengthMm:9000,widthMm:6000,elevationMm:0,layers:DEFAULT_LAYERS,status:'idle'};
+function clampInteger(value:unknown,fallback:number,min:number,max:number){const n=Number(value);return Number.isFinite(n)?Math.min(max,Math.max(min,Math.round(n))):fallback;}
+function inferMaterialId(layer:Partial<FloorLayer>):string{if(typeof layer.materialId==='string'&&materialById(layer.materialId))return layer.materialId;const name=(layer.name??'').toLowerCase();if(name.includes('osb'))return'osb-3';if(name.includes('балк')||name.includes('брус')||name.includes('древес'))return'structural-timber';if(name.includes('ват')||name.includes('теплоизоля'))return'mineral-wool';if(name.includes('стяж'))return'cement-screed';return'osb-3';}
+function normalizeLayer(value:unknown):FloorLayer|undefined{if(!value||typeof value!=='object')return;const layer=value as Partial<FloorLayer>,id=clampInteger(layer.id,0,1,Number.MAX_SAFE_INTEGER);if(!id)return;const materialId=inferMaterialId(layer),material=materialById(materialId);return{id,materialId,kind:material?.group??'other',name:material?.name??'Материал',thicknessMm:clampInteger(layer.thicknessMm,material?.defaultThicknessMm??20,1,2000),color:material?.color??'#8ab4f8'};}
+function loadPersistedState():Partial<FloorFieldState>|undefined{if(typeof window==='undefined')return;const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const parsed=JSON.parse(raw) as Partial<PersistedFloorFieldState>;if(parsed.version!==1)return;const layers=Array.isArray(parsed.layers)?parsed.layers.map(normalizeLayer).filter((x):x is FloorLayer=>!!x):[...DEFAULT_LAYERS];return{lengthMm:clampInteger(parsed.lengthMm,9000,MIN_SIZE_MM,MAX_SIZE_MM),widthMm:clampInteger(parsed.widthMm,6000,MIN_SIZE_MM,MAX_SIZE_MM),elevationMm:clampInteger(parsed.elevationMm,0,-10000,50000),layers:layers.length?layers:[...DEFAULT_LAYERS]};}
+export const FloorFieldStore=signalStore({providedIn:'root'},withState(initialState),withComputed(({layers})=>({totalLayerThicknessMm:computed(()=>layers().reduce((s,l)=>s+l.thicknessMm,0))})),withMethods(store=>{const persist=()=>{if(typeof window==='undefined')return;localStorage.setItem(STORAGE_KEY,JSON.stringify({version:1,lengthMm:store.lengthMm(),widthMm:store.widthMm(),elevationMm:store.elevationMm(),layers:store.layers()}));};const update=(state:Partial<FloorFieldState>)=>{patchState(store,state);persist();};return{
+initialize(){if(store.status()!=='idle')return;try{const p=loadPersistedState();patchState(store,p??{},{status:'ready'});if(!p)persist();}catch{patchState(store,{status:'error'});}},setLength(v:number){update({lengthMm:clampInteger(v,store.lengthMm(),MIN_SIZE_MM,MAX_SIZE_MM)});},setWidth(v:number){update({widthMm:clampInteger(v,store.widthMm(),MIN_SIZE_MM,MAX_SIZE_MM)});},setElevation(v:number){update({elevationMm:clampInteger(v,store.elevationMm(),-10000,50000)});},swapDimensions(){update({lengthMm:store.widthMm(),widthMm:store.lengthMm()});},resetGeometry(){update({lengthMm:9000,widthMm:6000,elevationMm:0});},
+addLayer(position:'top'|'bottom'){const nextId=Math.max(0,...store.layers().map(l=>l.id))+1,m=materialById('osb-3')!;const layer:FloorLayer={id:nextId,materialId:m.id,kind:m.group,name:m.name,thicknessMm:m.defaultThicknessMm??20,color:m.color};update({layers:position==='top'?[layer,...store.layers()]:[...store.layers(),layer]});},removeLayer(id:number){update({layers:store.layers().filter(l=>l.id!==id)});},
+setLayerMaterial(id:number,materialId:string){const m=materialById(materialId);if(!m)return;update({layers:store.layers().map(l=>l.id===id?{...l,materialId:m.id,kind:m.group,name:m.name,thicknessMm:m.defaultThicknessMm??l.thicknessMm,color:m.color}:l)});},
+updateLayer(id:number,patch:Partial<Pick<FloorLayer,'color'|'thicknessMm'>>){update({layers:store.layers().map(l=>l.id===id?{...l,...patch,thicknessMm:patch.thicknessMm===undefined?l.thicknessMm:clampInteger(patch.thicknessMm,l.thicknessMm,1,2000)}:l)});},
+reorderLayers(sourceId:number,targetId:number,position:'before'|'after'){if(sourceId===targetId)return;const layers=[...store.layers()];const si=layers.findIndex(l=>l.id===sourceId);let ti=layers.findIndex(l=>l.id===targetId);if(si<0||ti<0)return;const[m]=layers.splice(si,1);if(si<ti)ti--;layers.splice(position==='after'?ti+1:ti,0,m);update({layers});}
+};}));
