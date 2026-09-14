@@ -33,8 +33,8 @@ type Workspace='house'|'materials'|'exchange'|'settings';
           <details class="group/storey rounded" open>
             <summary class="cursor-pointer list-none rounded px-3 py-1.5 text-[var(--sb-text-muted)] hover:bg-[var(--sb-gray-3)]"><sb-icon name="chevronRight" class="mr-1 transition-transform group-open/storey:rotate-90" />{{'structure.storey'|transloco}} {{i+1}} <span class="float-right text-[10px] opacity-70">+{{storey.baseElevationMm/1000}} / +{{storeyTop(storey.id)/1000}} м</span></summary>
             <div class="ml-5 border-l border-[var(--sb-border)] pl-2">
-              <div class="rounded px-3 py-1.5 text-xs text-[var(--sb-text-muted)] opacity-70">{{'shell.walls'|transloco}} <span class="float-right">{{'shell.soon'|transloco}}</span></div>
               <a routerLink="/app/floor-field" [queryParams]="{storey:storey.id}" routerLinkActive="bg-[var(--sb-accent-soft)] text-[var(--sb-text)]" class="block rounded px-3 py-1.5 text-xs text-[var(--sb-text-muted)]">{{'shell.floorField'|transloco}}</a>
+              <div class="rounded px-3 py-1.5 text-xs text-[var(--sb-text-muted)] opacity-70">{{'shell.walls'|transloco}} <span class="float-right">{{'shell.soon'|transloco}}</span></div>
             </div>
           </details>
         }
