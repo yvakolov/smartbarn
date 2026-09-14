@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import type { FormValueControl } from '@angular/forms/signals';
 import { SearchComboboxComponent, type SearchComboboxOption } from '@smartbarn/ui-kit';
 import { MATERIAL_GROUPS, type MaterialRecord } from '../materials/material-catalog';
 
@@ -14,14 +15,16 @@ import { MATERIAL_GROUPS, type MaterialRecord } from '../materials/material-cata
     <sb-search-combobox
       [options]="options()"
       [placeholder]="placeholder()"
+      [disabled]="disabled()"
       emptyText="Материалы не найдены"
       [(value)]="value"
     />
   `,
 })
-export class MaterialComboboxComponent {
+export class MaterialComboboxComponent implements FormValueControl<string | null> {
   readonly materials = input.required<readonly MaterialRecord[]>();
   readonly placeholder = input('Выберите материал');
+  readonly disabled = input(false);
   readonly value = model<string | null>(null);
 
   readonly options = computed<readonly SearchComboboxOption[]>(() => {
