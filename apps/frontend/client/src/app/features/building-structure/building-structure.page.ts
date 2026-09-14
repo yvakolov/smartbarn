@@ -3,7 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { lucidePlus, lucideX } from '@smartbarn/icons';
 import { IconComponent, provideIcons } from '@smartbarn/ui-kit';
-import { FLOOR_FIELD_CHANGED_EVENT, loadUnderWallsThicknessMm } from '../floor-field/floor-field.store';
+import { cloneFloorFieldForStorey, FLOOR_FIELD_CHANGED_EVENT, loadUnderWallsThicknessMm, removeFloorFieldForStorey } from '../floor-field/floor-field.store';
+import { cloneWallSettingsForStorey, removeWallSettingsForStorey } from '../walls/wall-settings';
 import {
   loadBuildingStructure,
   rebuildStoreyElevations,
@@ -33,7 +34,7 @@ type StructureMode = 'foundation' | 'storeys';
             <div class="grid gap-2 text-sm text-[var(--sb-text-muted)]">
               <div>{{ 'structure.baseElevation' | transloco }}: <strong class="text-[var(--sb-text)]">{{ structure().foundation.baseElevationMm }} {{ 'floorField.mm' | transloco }}</strong></div>
               <div>{{ 'structure.foundationTop' | transloco }}: <strong class="text-[var(--sb-text)]">{{ foundationTop() }} {{ 'floorField.mm' | transloco }}</strong></div>
-              <div>{{ 'structure.groundFloorHeight' | transloco }}: <strong class="text-[var(--sb-text)]">{{ underWallsThicknessMm() }} {{ 'floorField.mm' | transloco }}</strong></div>
+              <div>{{ 'structure.groundFloorHeight' | transloco }}: <strong class="text-[var(--sb-text)]">{{ firstStoreyFloorThickness() }} {{ 'floorField.mm' | transloco }}</strong></div>
             </div>
           </div>
         } @else {
@@ -51,7 +52,7 @@ type StructureMode = 'foundation' | 'storeys';
                 <div class="mt-4 grid gap-3 sm:grid-cols-3">
                   <label class="text-sm">{{ 'structure.baseElevation' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.baseElevationMm" readonly /></label>
                   <label class="text-sm">{{ 'structure.clearance' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.clearanceMm" (change)="updateStoreyClearance(storey.id,$event)" /></label>
-                  <label class="text-sm">{{ 'structure.storeyHeight' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.heightMm" readonly /><small class="mt-1 block text-xs text-[var(--sb-text-muted)]">{{ 'structure.heightFormula' | transloco:{floor:underWallsThicknessMm()} }}</small></label>
+                  <label class="text-sm">{{ 'structure.storeyHeight' | transloco }}<input type="number" class="mt-1 w-full rounded border border-[var(--sb-border)] bg-transparent p-2" [value]="storey.heightMm" readonly /><small class="mt-1 block text-xs text-[var(--sb-text-muted)]">{{ 'structure.heightFormula' | transloco:{floor:floorThickness(storey.id)} }}</small></label>
                 </div>
               </article>
             }
@@ -66,13 +67,14 @@ export class BuildingStructurePage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   readonly mode = (this.route.snapshot.data['mode'] as StructureMode | undefined) ?? 'storeys';
   readonly structure = signal<BuildingStructureModel>(loadBuildingStructure());
-  readonly underWallsThicknessMm=signal(loadUnderWallsThicknessMm());
-  private readonly refreshFromFloor=()=>{this.underWallsThicknessMm.set(loadUnderWallsThicknessMm());const next=rebuildStoreyElevations(this.structure());this.commit(next);};
+  private readonly refreshFromFloor=()=>this.commit(rebuildStoreyElevations(this.structure()));
 
   constructor(){if(typeof window!=='undefined')window.addEventListener(FLOOR_FIELD_CHANGED_EVENT,this.refreshFromFloor);}
   ngOnDestroy():void{if(typeof window!=='undefined')window.removeEventListener(FLOOR_FIELD_CHANGED_EVENT,this.refreshFromFloor);}
   foundationTop(): number { const f = this.structure().foundation; return f.baseElevationMm + f.heightMm; }
   roofBase(): number { return roofBaseElevationMm(this.structure()); }
+  floorThickness(storeyId:string):number{return loadUnderWallsThicknessMm(storeyId);}
+  firstStoreyFloorThickness():number{const first=this.structure().storeys[0];return first?this.floorThickness(first.id):0;}
 
   updateFoundationHeight(event: Event): void {
     const current=this.structure();
@@ -82,17 +84,23 @@ export class BuildingStructurePage implements OnDestroy {
 
   addStorey(): void {
     const current = this.structure();
+    const previous=current.storeys.at(-1);
     const index = current.storeys.length + 1;
-    const baseElevationMm = roofBaseElevationMm(current);
-    const clearanceMm=2800;
-    const heightMm=clearanceMm+this.underWallsThicknessMm();
-    this.commit({ ...current, storeys: [...current.storeys, { id: `storey-${Date.now()}`, name: `Этаж ${index}`, baseElevationMm, clearanceMm, heightMm }] });
+    const id=`storey-${Date.now()}`;
+    if(previous){cloneFloorFieldForStorey(previous.id,id);cloneWallSettingsForStorey(previous.id,id);}
+    const clearanceMm=previous?.clearanceMm??2800;
+    const heightMm=clearanceMm+loadUnderWallsThicknessMm(id);
+    const baseElevationMm=roofBaseElevationMm(current);
+    this.commit(rebuildStoreyElevations({ ...current, storeys: [...current.storeys, { id, name: `Этаж ${index}`, baseElevationMm, clearanceMm, heightMm }] }));
   }
 
   removeStorey(id: string): void {
     const current = this.structure();
     if (current.storeys.length <= 1) return;
-    this.commit(rebuildStoreyElevations({ ...current, storeys: current.storeys.filter((storey) => storey.id !== id) }));
+    const next=rebuildStoreyElevations({ ...current, storeys: current.storeys.filter((storey) => storey.id !== id) });
+    this.commit(next);
+    removeFloorFieldForStorey(id);
+    removeWallSettingsForStorey(id);
   }
 
   updateStoreyClearance(id: string, event: Event): void {
