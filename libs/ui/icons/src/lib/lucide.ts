@@ -63,6 +63,14 @@ export const lucideArrowLeftRight = lucide('arrowLeftRight', [
   'M20 17H4',
 ]);
 
+/** Lucide arrow-down-up icon: import + export / bidirectional data exchange. */
+export const lucideArrowDownUp = lucide('arrowDownUp', [
+  'm3 16 4 4 4-4',
+  'M7 20V4',
+  'm21 8-4-4-4 4',
+  'M17 4v16',
+]);
+
 /** Lucide settings icon. */
 export const lucideSettings = lucide('settings', [
   'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.74v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z',
