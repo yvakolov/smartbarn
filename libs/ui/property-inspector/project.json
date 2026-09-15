@@ -1,0 +1,7 @@
+{
+  "name": "property-inspector",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/ui/property-inspector/src",
+  "tags": ["scope:ui", "type:property-inspector"]
+}
