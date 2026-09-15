@@ -11,6 +11,7 @@ export interface FloorFieldCameraPreference {
 
 interface FloorFieldPreferencesState {
   readonly userId: string;
+  readonly elementId: string;
   readonly activeView: FloorFieldViewPreference;
   readonly inspectorOpen: boolean;
   readonly gridStepMm: number;
@@ -23,8 +24,10 @@ interface FloorFieldPreferencesState {
 }
 
 const DEFAULT_USER_ID = 'local-user';
-const defaults = (userId = DEFAULT_USER_ID): FloorFieldPreferencesState => ({
+const DEFAULT_ELEMENT_ID = 'storey-1';
+const defaults = (userId = DEFAULT_USER_ID, elementId = DEFAULT_ELEMENT_ID): FloorFieldPreferencesState => ({
   userId,
+  elementId,
   activeView: 'geometry',
   inspectorOpen: true,
   gridStepMm: 100,
@@ -36,19 +39,20 @@ const defaults = (userId = DEFAULT_USER_ID): FloorFieldPreferencesState => ({
   hiddenLayerIds: [],
 });
 
-function storageKey(userId: string): string {
-  return `smartbarn.user-settings.${userId}.floor-field.v1`;
+function storageKey(userId: string, elementId: string): string {
+  return `smartbarn.user-settings.${userId}.floor-field.${elementId}.v1`;
 }
 
-function read(userId: string): FloorFieldPreferencesState {
-  const fallback = defaults(userId);
+function read(userId: string, elementId: string): FloorFieldPreferencesState {
+  const fallback = defaults(userId, elementId);
   if (typeof window === 'undefined') return fallback;
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(storageKey(userId)) ?? '{}') as Partial<FloorFieldPreferencesState>;
+    const parsed = JSON.parse(window.localStorage.getItem(storageKey(userId, elementId)) ?? '{}') as Partial<FloorFieldPreferencesState>;
     return {
       ...fallback,
       ...parsed,
       userId,
+      elementId,
       cameraMode: parsed.cameraMode === 'perspective' ? 'perspective' : 'orthographic',
       hiddenLayerIds: Array.isArray(parsed.hiddenLayerIds) ? parsed.hiddenLayerIds.filter(Number.isFinite) : [],
       camera: parsed.camera ?? null,
@@ -64,7 +68,7 @@ export const FloorFieldPreferencesStore = signalStore(
   withMethods((store) => {
     const persist = (): void => {
       if (typeof window === 'undefined') return;
-      window.localStorage.setItem(storageKey(store.userId()), JSON.stringify({
+      window.localStorage.setItem(storageKey(store.userId(), store.elementId()), JSON.stringify({
         activeView: store.activeView(), inspectorOpen: store.inspectorOpen(), gridStepMm: store.gridStepMm(),
         snapToGrid: store.snapToGrid(), show3dGrid: store.show3dGrid(), navigationMode: store.navigationMode(),
         cameraMode: store.cameraMode(), camera: store.camera(), hiddenLayerIds: store.hiddenLayerIds(),
@@ -72,7 +76,8 @@ export const FloorFieldPreferencesStore = signalStore(
     };
     const update = (patch: Partial<FloorFieldPreferencesState>): void => { patchState(store, patch); persist(); };
     return {
-      initialize(userId = DEFAULT_USER_ID): void { patchState(store, read(userId)); },
+      initialize(userId = DEFAULT_USER_ID, elementId = DEFAULT_ELEMENT_ID): void { patchState(store, read(userId, elementId)); },
+      switchElement(elementId: string): void { patchState(store, read(store.userId(), elementId)); },
       setActiveView(activeView: FloorFieldViewPreference): void { update({ activeView }); },
       setInspectorOpen(inspectorOpen: boolean): void { update({ inspectorOpen }); },
       setGridStepMm(gridStepMm: number): void { update({ gridStepMm }); },
@@ -86,7 +91,7 @@ export const FloorFieldPreferencesStore = signalStore(
       },
       showAllLayers(): void { update({ hiddenLayerIds: [] }); },
       hideAllLayers(ids: readonly number[]): void { update({ hiddenLayerIds: [...ids] }); },
-      resetWorkspace(): void { const userId = store.userId(); patchState(store, defaults(userId)); persist(); },
+      resetWorkspace(): void { const userId = store.userId(), elementId = store.elementId(); patchState(store, defaults(userId, elementId)); persist(); },
     };
   }),
 );
