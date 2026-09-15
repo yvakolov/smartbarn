@@ -27,6 +27,7 @@ export const MATERIAL_GROUPS: ReadonlyArray<{ id: MaterialGroup; name: string }>
 
 export const DEFAULT_MATERIALS: readonly MaterialRecord[] = [
   { id: 'osb-3', group: 'sheet', name: 'OSB-3', defaultThicknessMm: 12, densityKgM3: 650, thermalConductivityWMK: 0.13, color: '#f5d77a' },
+  { id: 'eps', group: 'insulation', name: 'EPS (вспененный пенополистирол)', defaultThicknessMm: 200, densityKgM3: 20, thermalConductivityWMK: 0.038, color: '#f2f2e8' },
   { id: 'mineral-wool', group: 'insulation', name: 'Минеральная вата', defaultThicknessMm: 200, densityKgM3: 40, thermalConductivityWMK: 0.038, color: '#e8c66a' },
   { id: 'structural-timber', group: 'wood', name: 'Конструкционная древесина', defaultThicknessMm: 200, densityKgM3: 500, thermalConductivityWMK: 0.13, color: '#e58b2a' },
   { id: 'cement-screed', group: 'concrete', name: 'Цементная стяжка', defaultThicknessMm: 60, densityKgM3: 2000, thermalConductivityWMK: 1.4, color: '#aaa9a5' },
