@@ -12,7 +12,7 @@ interface PersistedFloorFieldCollection{readonly version:2;readonly byStoreyId:R
 const LEGACY_STORAGE_KEY='smartbarn.floor-field.v1',STORAGE_KEY='smartbarn.floor-fields.v2',MIN_SIZE_MM=500,MAX_SIZE_MM=50000,DEFAULT_STOREY_ID='storey-1';
 const DEFAULT_LAYERS:readonly FloorLayer[]=[
 {id:1,materialId:'osb-3',kind:'sheet',name:'OSB-3',thicknessMm:12,color:'#f5d77a',wallPlacement:'under-walls'},
-{id:2,materialId:'structural-timber',kind:'wood',name:'Конструкционная древесина',thicknessMm:200,color:'#e58b2a',wallPlacement:'under-walls'},
+{id:2,materialId:'eps',kind:'insulation',name:'EPS',thicknessMm:200,color:'#f2f2e8',wallPlacement:'under-walls'},
 {id:3,materialId:'osb-3',kind:'sheet',name:'OSB-3',thicknessMm:12,color:'#f5d77a',wallPlacement:'under-walls'}];
 const DEFAULT_MODEL:FloorFieldModel={version:1,lengthMm:9000,widthMm:6000,elevationMm:0,layers:DEFAULT_LAYERS};
 const initialState:FloorFieldState={activeStoreyId:DEFAULT_STOREY_ID,...DEFAULT_MODEL,status:'idle'};
