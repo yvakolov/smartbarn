@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, ViewChild, computed, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import Konva from 'konva';
 import { CheckboxComponent, InputNumberComponent } from '@smartbarn/ui-kit';
 import { BUILDING_STRUCTURE_CHANGED_EVENT, loadBuildingStructure, rebuildStoreyElevations, saveBuildingStructure, type BuildingStructureModel } from '../building-structure/building-structure';
@@ -36,9 +36,10 @@ export class BuildingProfilePage implements AfterViewInit, OnDestroy {
   readonly minElevation = computed(() => this.profile().structure.foundation.baseElevationMm);
   private stage?: Konva.Stage;
   private resize?: ResizeObserver;
+  private readonly floorStore = inject(FloorFieldStore);
   private readonly refresh = () => { this.structure.set(loadBuildingStructure()); this.draw(); };
 
-  constructor(private readonly zone: NgZone, private readonly floorStore: FloorFieldStore) {
+  constructor(private readonly zone: NgZone) {
     if (typeof window !== 'undefined') { window.addEventListener(BUILDING_STRUCTURE_CHANGED_EVENT, this.refresh); window.addEventListener(FLOOR_FIELD_CHANGED_EVENT, this.refresh); window.addEventListener(WALL_SETTINGS_CHANGED_EVENT, this.refresh); }
   }
   ngAfterViewInit() { if (!this.host) return; this.zone.runOutsideAngular(() => { this.stage = new Konva.Stage({ container: this.host!.nativeElement, width: 1, height: 1 }); this.stage.on('click tap', (event) => { if (event.target !== this.stage) return; this.zone.run(() => { this.selection.set(null); this.draw(); }); }); this.resize = new ResizeObserver(() => this.draw()); this.resize.observe(this.host!.nativeElement); this.draw(); }); }
