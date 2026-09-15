@@ -26,7 +26,8 @@
       "@smartbarn/bim-converter": ["libs/bim-converter/src/index.ts"],
       "@smartbarn/ui-ds": ["libs/ui/ds/src/index.ts"],
       "@smartbarn/icons": ["libs/ui/icons/src/index.ts"],
-      "@smartbarn/ui-kit": ["libs/ui/kit/src/index.ts"]
+      "@smartbarn/ui-kit": ["libs/ui/kit/src/index.ts"],
+      "@smartbarn/property-inspector": ["libs/ui/property-inspector/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
