@@ -1,8 +1,16 @@
 import { loadUnderWallsThicknessMm } from '../floor-field/floor-field.store';
 
 export interface FoundationModel {
+  readonly type: 'screw-pile-timber-grillage';
+  /** Bottom elevation of the 200x200 timber grillage. */
   readonly baseElevationMm: number;
+  /** Timber grillage height. Default beam section is 200x200 mm. */
   readonly heightMm: number;
+  readonly beamWidthMm: number;
+  readonly pileDiameterMm: number;
+  readonly pileLengthMm: number;
+  /** Distance from ground level to the lower face of the grillage. */
+  readonly groundClearanceMm: number;
 }
 
 export interface StoreyModel {
@@ -17,7 +25,7 @@ export interface StoreyModel {
 }
 
 export interface BuildingStructureModel {
-  readonly version: 1;
+  readonly version: 2;
   readonly foundation: FoundationModel;
   readonly storeys: readonly StoreyModel[];
 }
@@ -25,11 +33,23 @@ export interface BuildingStructureModel {
 export const BUILDING_STRUCTURE_CHANGED_EVENT = 'smartbarn:building-structure-changed';
 const STORAGE_KEY = 'smartbarn.building-structure.v1';
 const DEFAULT_CLEARANCE_MM=2800;
-const DEFAULT_FOUNDATION_HEIGHT_MM=600;
+const DEFAULT_FOUNDATION_HEIGHT_MM=200;
+const DEFAULT_BEAM_WIDTH_MM=200;
+const DEFAULT_PILE_DIAMETER_MM=108;
+const DEFAULT_PILE_LENGTH_MM=3000;
+const DEFAULT_GROUND_CLEARANCE_MM=400;
 
 export const DEFAULT_BUILDING_STRUCTURE: BuildingStructureModel = {
-  version: 1,
-  foundation: { baseElevationMm: -824, heightMm: DEFAULT_FOUNDATION_HEIGHT_MM },
+  version: 2,
+  foundation: {
+    type:'screw-pile-timber-grillage',
+    baseElevationMm:-424,
+    heightMm:DEFAULT_FOUNDATION_HEIGHT_MM,
+    beamWidthMm:DEFAULT_BEAM_WIDTH_MM,
+    pileDiameterMm:DEFAULT_PILE_DIAMETER_MM,
+    pileLengthMm:DEFAULT_PILE_LENGTH_MM,
+    groundClearanceMm:DEFAULT_GROUND_CLEARANCE_MM,
+  },
   storeys: [{ id: 'storey-1', name: 'Этаж 1', baseElevationMm: -224, clearanceMm: DEFAULT_CLEARANCE_MM, heightMm: DEFAULT_CLEARANCE_MM + 224 }],
 };
 
@@ -55,7 +75,6 @@ export function normalizeBuildingStructure(value: unknown): BuildingStructureMod
   if (!value || typeof value !== 'object') return rebuildStoreyElevations(DEFAULT_BUILDING_STRUCTURE);
   const source = value as Partial<BuildingStructureModel>;
   const foundationSource = source.foundation ?? DEFAULT_BUILDING_STRUCTURE.foundation;
-  const foundationHeightMm=numberInRange(foundationSource.heightMm, DEFAULT_FOUNDATION_HEIGHT_MM, 100, 5000);
   const rawStoreys = Array.isArray(source.storeys) ? source.storeys : DEFAULT_BUILDING_STRUCTURE.storeys;
   let nextBase = 0;
   const storeys = rawStoreys.map((raw, index) => {
@@ -77,8 +96,17 @@ export function normalizeBuildingStructure(value: unknown): BuildingStructureMod
     return storey;
   });
   const firstThickness=storeys.length?loadUnderWallsThicknessMm(storeys[0].id):0;
-  const foundation: FoundationModel = {heightMm:foundationHeightMm,baseElevationMm:-firstThickness-foundationHeightMm};
-  return { version: 1, foundation, storeys };
+  const heightMm=numberInRange(foundationSource.heightMm,DEFAULT_FOUNDATION_HEIGHT_MM,100,1000);
+  const foundation:FoundationModel={
+    type:'screw-pile-timber-grillage',
+    heightMm,
+    beamWidthMm:numberInRange(foundationSource.beamWidthMm,DEFAULT_BEAM_WIDTH_MM,100,500),
+    pileDiameterMm:numberInRange(foundationSource.pileDiameterMm,DEFAULT_PILE_DIAMETER_MM,57,325),
+    pileLengthMm:numberInRange(foundationSource.pileLengthMm,DEFAULT_PILE_LENGTH_MM,1000,12000),
+    groundClearanceMm:numberInRange(foundationSource.groundClearanceMm,DEFAULT_GROUND_CLEARANCE_MM,0,400),
+    baseElevationMm:-firstThickness-heightMm,
+  };
+  return { version: 2, foundation, storeys };
 }
 
 export function loadBuildingStructure(): BuildingStructureModel {
