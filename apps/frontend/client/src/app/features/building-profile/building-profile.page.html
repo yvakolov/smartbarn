@@ -1,1 +1,29 @@
-<section class="profile"><header><div><h1>Профиль дома</h1><p>Поперечный разрез по ширине дома</p></div></header><div class="workspace"><div #konvaHost class="canvas" role="img" aria-label="Поперечный разрез дома"></div><aside class="info"><div class="property"><label>Ширина здания</label><j-input-number [value]="buildingWidth()" [min]="500" [max]="50000" [step]="100" (valueChange)="setBuildingWidth($event)"/><span>мм</span></div><div class="property"><label>Отображение</label><j-checkbox [checked]="showBothSides()" (checkedChange)="setShowBothSides($event)">Показывать обе половины</j-checkbox></div>@if(selection();as s){<strong>Выбран элемент</strong>@if(s.type==='foundation'){<p>Фундамент</p><div class="property"><label>Высота ростверка</label><j-input-number [value]="foundationHeight()" [min]="100" [max]="1000" [step]="10" (valueChange)="setFoundationHeight($event)"/><span>мм</span></div>}@else if(s.type==='roof'){<p>Крыша</p><div class="property"><label>Уклон крыши</label><j-input-number [value]="roofPitch()" [min]="5" [max]="80" [step]="1" (valueChange)="setRoofPitch($event)"/><span>°</span></div><div class="property"><label>Высота стропила / теплоизоляции</label><j-input-number [value]="roofLayerThicknessMm()" [min]="20" [max]="1000" [step]="10" (valueChange)="setRoofLayerThickness($event)"/><span>мм</span></div>}@else if(s.type==='floor'){<p>Перекрытие · {{s.storeyId}}</p><div class="property"><label>Толщина перекрытия</label><j-input-number [value]="floorThickness(s.storeyId)" [min]="20" [max]="2000" [step]="10" (valueChange)="setFloorThickness(s.storeyId,$event)"/><span>мм</span></div>}@else if(s.type==='walls'){<p>Стены · {{s.storeyId}}</p><div class="property"><label>Толщина стены</label><j-input-number [value]="wallThickness(s.storeyId)" [min]="20" [max]="2000" [step]="10" (valueChange)="setWallThickness(s.storeyId,$event)"/><span>мм</span></div><div class="property"><label>Высота стены</label><j-input-number [value]="wallHeight(s.storeyId)" [min]="1000" [max]="6000" [step]="10" (valueChange)="setWallHeight(s.storeyId,$event)"/><span>мм</span></div>}}@else{<strong>Профиль здания</strong><p>{{showBothSides()?'Полный поперечный разрез здания.':'Левая половина разреза от наружной стены до оси конька.'}}</p>}</aside></div></section>
+<section class="workspace">
+  <input id="profile-inspector-toggle" class="inspector-toggle" type="checkbox" aria-label="Скрыть инспектор" />
+  <main class="workspace__canvas">
+    <div #konvaHost class="canvas" role="img" aria-label="Поперечный разрез дома"></div>
+  </main>
+  <aside class="inspector">
+    <label class="inspector__toggle" for="profile-inspector-toggle" title="Свернуть инспектор" aria-label="Свернуть инспектор">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path></svg>
+    </label>
+    <div class="inspector__content">
+      <div class="property"><label>Ширина здания, мм</label><j-input-number [value]="buildingWidth()" [min]="500" [max]="50000" [step]="100" (valueChange)="setBuildingWidth($event)"/></div>
+      <div class="property"><label>Отображение</label><j-checkbox [checked]="showBothSides()" (checkedChange)="setShowBothSides($event)">Показывать обе половины</j-checkbox></div>
+      @if(selection();as s){
+        <strong>Выбран элемент</strong>
+        @if(s.type==='foundation'){
+          <p>Фундамент</p><div class="property"><label>Высота ростверка, мм</label><j-input-number [value]="foundationHeight()" [min]="100" [max]="1000" [step]="10" (valueChange)="setFoundationHeight($event)"/></div>
+        }@else if(s.type==='roof'){
+          <p>Крыша</p><div class="property"><label>Уклон крыши, °</label><j-input-number [value]="roofPitch()" [min]="5" [max]="80" [step]="1" (valueChange)="setRoofPitch($event)"/></div><div class="property"><label>Высота стропила / теплоизоляции, мм</label><j-input-number [value]="roofLayerThicknessMm()" [min]="20" [max]="1000" [step]="10" (valueChange)="setRoofLayerThickness($event)"/></div>
+        }@else if(s.type==='floor'){
+          <p>Перекрытие · {{s.storeyId}}</p><div class="property"><label>Толщина перекрытия, мм</label><j-input-number [value]="floorThickness(s.storeyId)" [min]="20" [max]="2000" [step]="10" (valueChange)="setFloorThickness(s.storeyId,$event)"/></div>
+        }@else if(s.type==='walls'){
+          <p>Стены · {{s.storeyId}}</p><div class="property"><label>Толщина стены, мм</label><j-input-number [value]="wallThickness(s.storeyId)" [min]="20" [max]="2000" [step]="10" (valueChange)="setWallThickness(s.storeyId,$event)"/></div><div class="property"><label>Высота стены, мм</label><j-input-number [value]="wallHeight(s.storeyId)" [min]="1000" [max]="6000" [step]="10" (valueChange)="setWallHeight(s.storeyId,$event)"/></div>
+        }
+      }@else{
+        <strong>Профиль здания</strong><p>{{showBothSides()?'Полный поперечный разрез здания.':'Левая половина разреза от наружной стены до оси конька.'}}</p>
+      }
+    </div>
+  </aside>
+</section>
